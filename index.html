@@ -391,8 +391,7 @@ Return the ENTIRE modified JSON object matching schema with exactly ${currentSes
             }
           };
 
-          const apiKey = ""; 
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+          const apiUrl = '/api/generate';
 
           const response = await fetch(apiUrl, {
             method: 'POST',
@@ -492,8 +491,7 @@ Subject: ${formData.subject || 'General Education'}`;
 
           if (tools) payload.tools = tools;
 
-          const apiKey = ""; 
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+          const apiUrl = '/api/generate';
 
           const response = await fetch(apiUrl, {
             method: 'POST',
