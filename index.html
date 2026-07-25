@@ -1,1478 +1,1088 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="scroll-smooth dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DLL ILAW GENERATOR™ // CYBER-ENGINE v3.0</title>
-
-  <!-- Google Fonts: Orbitron & Rajdhani for Futuristic Aesthetics -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            orbitron: ['Orbitron', 'sans-serif'],
-            rajdhani: ['Rajdhani', 'sans-serif'],
-          },
-          colors: {
-            cyber: {
-              black: '#050811',
-              dark: '#0a0f1d',
-              panel: 'rgba(12, 20, 38, 0.85)',
-              border: '#00ff88',
-              glow: 'rgba(0, 255, 136, 0.4)',
-              neon: '#00ff88',
-              cyan: '#00f0ff',
-              magenta: '#ff0055'
-            }
-          },
-          boxShadow: {
-            'neon-green': '0 0 20px rgba(0, 255, 136, 0.35), inset 0 0 15px rgba(0, 255, 136, 0.15)',
-            'neon-glow': '0 0 35px rgba(0, 255, 136, 0.5)',
-            'cyan-glow': '0 0 25px rgba(0, 240, 255, 0.4)',
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- React 18, Babel, & Docx Library -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/docx@8.2.3/build/index.umd.js"></script>
-
-  <style>
-    /* Futuristic Scanline Overlay */
-    .scanlines {
-      background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0),
-        rgba(255,255,255,0) 50%,
-        rgba(0, 0, 0, 0.3) 50%,
-        rgba(0, 0, 0, 0.3)
-      );
-      background-size: 100% 4px;
-    }
-
-    /* Animated Grid Canvas */
-    .cyber-grid {
-      background-size: 40px 40px;
-      background-image: 
-        linear-gradient(to right, rgba(0, 255, 136, 0.07) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 255, 136, 0.07) 1px, transparent 1px);
-    }
-
-    /* Neon Pulse Keyframes */
-    @keyframes neonPulse {
-      0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 12px #00ff88); }
-      50% { opacity: 1; filter: drop-shadow(0 0 22px #00ff88); }
-    }
-    .animate-neon-pulse { animation: neonPulse 3s infinite ease-in-out; }
-
-    @keyframes radarScan {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .animate-radar { animation: radarScan 12s linear infinite; }
-
-    /* Custom Scrollbar for Sci-Fi Interface */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #050811; }
-    ::-webkit-scrollbar-thumb { background: #00ff88; border-radius: 2px; box-shadow: 0 0 10px #00ff88; }
-    ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
-
-    @media print {
-      body { background: white !important; color: black !important; }
-      .no-print { display: none !important; }
-    }
-  </style>
-</head>
-<body class="bg-[#050811] dark:bg-[#050811] text-slate-100 font-rajdhani antialiased selection:bg-[#00ff88] selection:text-black min-h-screen overflow-x-hidden">
-  <div id="root"></div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    window.FB_MODULES = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, updateDoc };
-  </script>
-
-  <script type="text/babel">
-    const { useState, useRef, useEffect, useReducer, useCallback } = React;
-
-    // Cyberpunk Custom SVG Icons
-    const RobotIcon = ({ className = "w-6 h-6" }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="10" rx="2" />
-        <circle cx="12" cy="5" r="2" />
-        <path d="M12 7v4" />
-        <line x1="8" y1="16" x2="8.01" y2="16" strokeWidth="3" />
-        <line x1="16" y1="16" x2="16.01" y2="16" strokeWidth="3" />
-        <path d="M9 19h6" />
-        <path d="M2 14h1" />
-        <path d="M21 14h1" />
-      </svg>
-    );
-
-    const SunIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-    );
-
-    const MoonIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    );
-
-    const BrainIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/></svg>
-    );
-
-    const CpuIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <rect x="4" y="4" width="16" height="16" rx="2"/>
-        <rect x="9" y="9" width="6" height="6"/>
-        <path d="M15 2v2M9 2v2M15 20v2M9 20v2M20 15h2M20 9h2M2 15h2M2 9h2"/>
-      </svg>
-    );
-
-    const UploadIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    );
-
-    const FileIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-    );
-
-    const DownloadIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    );
-
-    const LoaderIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={`${className} animate-spin`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
-    );
-
-    const ZapIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    );
-
-    const CrossIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    );
-
-    const ChevronIcon = ({ direction = "left", className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        {direction === "left" ? <polyline points="15 18 9 12 15 6"/> : <polyline points="9 18 15 12 9 6"/>}
-      </svg>
-    );
-
-    const LayersIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-        <polyline points="2 17 12 22 22 17"/>
-        <polyline points="2 12 12 17 22 12"/>
-      </svg>
-    );
-
-    const LockIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-      </svg>
-    );
-
-    const UnlockIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-      </svg>
-    );
-
-    const ShieldIcon = ({ className = "w-5 h-5" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-      </svg>
-    );
-
-    const FuturisticBackground = () => (
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Sci-Fi Grid Overlay */}
-        <div className="absolute inset-0 cyber-grid opacity-30"></div>
-        <div className="absolute inset-0 scanlines opacity-20"></div>
-
-        {/* Neon Green Ambient Radial Light */}
-        <div className="absolute top-10 left-1/4 w-[500px] h-[500px] bg-[#00ff88]/10 rounded-full blur-[140px]"></div>
-        <div className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-[#00f0ff]/10 rounded-full blur-[160px]"></div>
-
-        {/* Futuristic Robot Silhouette Graphic */}
-        <div className="absolute top-1/4 -left-20 opacity-10 text-[#00ff88] hidden lg:block animate-pulse">
-          <svg className="w-[450px] h-[450px]" viewBox="0 0 200 200" fill="currentColor">
-            <path d="M100 20 L130 50 L130 90 L160 120 L160 170 L130 190 L70 190 L40 170 L40 120 L70 50 Z" opacity="0.15"/>
-            <circle cx="80" cy="80" r="12" fill="#00ff88" opacity="0.6"/>
-            <circle cx="120" cy="80" r="12" fill="#00ff88" opacity="0.6"/>
-            <path d="M70 130 Q100 150 130 130" stroke="#00ff88" strokeWidth="6" fill="none"/>
-            <line x1="100" y1="20" x2="100" y2="0" stroke="#00ff88" strokeWidth="4"/>
-            <circle cx="100" cy="0" r="6" fill="#00ff88"/>
-          </svg>
-        </div>
-
-        <div className="absolute -bottom-10 right-0 opacity-15 text-[#00f0ff] hidden xl:block">
-          <svg className="w-[500px] h-[500px]" viewBox="0 0 200 200" fill="currentColor">
-            <polygon points="100,10 170,50 170,150 100,190 30,150 30,50" fill="none" stroke="#00f0ff" strokeWidth="2" strokeDasharray="5,5"/>
-            <circle cx="100" cy="100" r="60" fill="none" stroke="#00ff88" strokeWidth="1"/>
-            <circle cx="100" cy="100" r="30" fill="none" stroke="#00f0ff" strokeWidth="2"/>
-            <line x1="40" y1="100" x2="160" y2="100" stroke="#00ff88" strokeWidth="1"/>
-            <line x1="100" y1="40" x2="100" y2="160" stroke="#00ff88" strokeWidth="1"/>
-          </svg>
-        </div>
-      </div>
-    );
-
-    const createLessonPlanSchema = (numSessions) => ({
-      type: "OBJECT",
-      properties: {
-        lessonName: { type: "STRING" },
-        competency: { type: "STRING" },
-        objectives: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items.` },
-        learnerContext: { type: "STRING" },
-        preLesson: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items.` },
-        flow: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items.` },
-        resources: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items.` },
-        opportunities: { 
-          type: "ARRAY", 
-          items: { type: "STRING" }, 
-          description: `Exactly ${numSessions} items. MUST explicitly name specific cross-curricular subjects for each session (e.g., EsP/Values Education, Science, Mathematics, Araling Panlipunan, MAPEH, ICT, Health, Peace Education, GAD, English/Filipino) and describe how they connect.` 
-        },
-        formativeAssessment: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items with 5 MCQs each.` },
-        extendedLearning: { type: "ARRAY", items: { type: "STRING" }, description: `Exactly ${numSessions} items.` }
-      },
-      required: ["lessonName", "competency", "objectives", "learnerContext", "preLesson", "flow", "resources", "opportunities", "formativeAssessment", "extendedLearning"]
-    });
-
-    const AVAILABLE_SUBJECT_TAGS = [
-      "Edukasyon sa Pagpapakatao (EsP) / Values Education",
-      "Science",
-      "Mathematics",
-      "Araling Panlipunan (AP)",
-      "ICT / Educational Technology",
-      "MAPEH (Music, Arts, PE, Health)",
-      "Peace Education",
-      "Gender and Development (GAD)",
-      "English / Language Arts",
-      "Filipino"
-    ];
-
-    function MainApp() {
-      const [theme, setTheme] = useState('dark');
-      const [formData, setFormData] = useState({
-        language: 'English',
-        numSessions: 5,
-        subject: '',
-        gradeSection: '',
-        termWeek: '',
-        pedagogicalStrategy: 'Explicit Teaching (Direct Instruction)',
-        integrationSubjects: 'Values Education (EsP), Science, Mathematics, ICT, Araling Panlipunan, Peace Education',
-        competency: '',
-        preparedBy: 'JUNGIE B. ESTRIBOR',
-        checkedBy: 'JUVY P. MUNDO, PhD'
-      });
-
-      const [file, setFile] = useState(null);
-      const [status, setStatus] = useState('idle'); // idle, generating, done
-      const [error, setError] = useState(null);
-      const [generatedData, setGeneratedData] = useState(null);
-      const [isExporting, setIsExporting] = useState(false);
-      
-      const fileInputRef = useRef(null);
-
-      // AI Refine Prompt State
-      const [refinementPrompt, setRefinementPrompt] = useState('');
-      const [isRefining, setIsRefining] = useState(false);
-
-      // Futuristic UI Drawer State
-      const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-      const [isMobile, setIsMobile] = useState(false);
-
-      useEffect(() => {
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }, [theme]);
-
-      const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-      };
-
-      useEffect(() => {
-        const handleResize = () => {
-          const mobile = window.innerWidth < 1024;
-          setIsMobile(mobile);
-          if (mobile) setIsSidebarOpen(false);
-          else setIsSidebarOpen(true);
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-
-      const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-          ...prev,
-          [name]: name === 'numSessions' ? parseInt(value, 10) : value
-        }));
-      };
-
-      const toggleSubjectTag = (subjectTag) => {
-        setFormData(prev => {
-          const currentList = prev.integrationSubjects
-            ? prev.integrationSubjects.split(',').map(s => s.trim()).filter(Boolean)
-            : [];
-          
-          let updatedList;
-          if (currentList.some(s => s.toLowerCase() === subjectTag.toLowerCase())) {
-            updatedList = currentList.filter(s => s.toLowerCase() !== subjectTag.toLowerCase());
-          } else {
-            updatedList = [...currentList, subjectTag];
-          }
-          return { ...prev, integrationSubjects: updatedList.join(', ') };
-        });
-      };
-
-      const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
-        if (selectedFile) {
-          const validTypes = ['.doc', '.docx', '.pdf'];
-          const ext = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
-          if (validTypes.includes(ext)) {
-            setFile(selectedFile);
-          } else {
-            alert('File type error: Please upload .doc, .docx, or .pdf format.');
-          }
-        }
-      };
-
-      const handleRefine = async () => {
-        if (!refinementPrompt.trim() || !generatedData) return;
-        setIsRefining(true);
-        setError(null);
-        
-        try {
-          const currentSessions = formData.numSessions || 5;
-          const schema = createLessonPlanSchema(currentSessions);
-          
-          const systemPrompt = `You are a futuristic DepEd AI Educational Controller in the Philippines.
-Update the current ${currentSessions}-session Weekly Lesson Plan (Lesson Exemplar) JSON according to user refinement guidelines while maintaining strict DepEd curriculum compliance.
-Pedagogical AI Strategy to incorporate: ${formData.pedagogicalStrategy}
-Specific Opportunities for Integration Subjects to maintain/enrich: ${formData.integrationSubjects}
-Language: ${formData.language}`;
-
-          const userPrompt = `Current JSON Plan:
-${JSON.stringify(generatedData)}
-
-Refinement Order: "${refinementPrompt}"
-Return the ENTIRE modified JSON object matching schema with exactly ${currentSessions} session elements per array. For "opportunities", explicitly name integration subjects.`;
-
-          const payload = {
-            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: schema
-            }
-          };
-
-          const apiUrl = '/api/generate';
-
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          const result = await response.json();
-
-          if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-            setGeneratedData(JSON.parse(result.candidates[0].content.parts[0].text));
-            setRefinementPrompt('');
-          } else {
-            throw new Error("Refinement response corrupted.");
-          }
-        } catch (err) {
-          console.error("Refine Error:", err);
-          setError("Cyber Refine Engine Encountered an Anomaly.");
-        } finally {
-          setIsRefining(false);
-        }
-      };
-
-      const handleGenerate = async () => {
-        setStatus('generating');
-        setError(null);
-        if (isMobile) setIsSidebarOpen(false);
-        
-        const count = formData.numSessions || 5;
-        const schema = createLessonPlanSchema(count);
-
-        try {
-          let payloadContents = [];
-          let systemPrompt = `You are a high-level DepEd AI Educational Architect.
-Synthesize a detailed ${count}-session Weekly Lesson Plan (Lesson Exemplar) in strict JSON format.
-
-PEDAGOGICAL STRATEGY TO EMBED: "${formData.pedagogicalStrategy}"
-CROSS-CURRICULAR SUBJECTS TO INTEGRATE IN "OPPORTUNITIES FOR INTEGRATION": "${formData.integrationSubjects}"
-
-RULES:
-1. Generate complete ${count}-session matrix structure. Each array property (objectives, preLesson, flow, resources, opportunities, formativeAssessment, extendedLearning) MUST contain exactly ${count} items corresponding to Session 1 through Session ${count}.
-2. Learning Experience (Flow): Provide precise, step-by-step instructional procedures for each session adhering to ${formData.pedagogicalStrategy}.
-3. Opportunities for Integration: Explicitly specify cross-curricular subject integrations for EACH session by explicitly naming specific subjects (e.g., EsP / Values Education, Science, Mathematics, Araling Panlipunan, MAPEH, ICT, Health, Peace Education, Gender and Development / GAD) and detailing how they directly relate to that session's lesson content.
-4. Formative Assessments: Provide 5 Multiple Choice Questions (MCQs) A-D for each of the ${count} sessions.
-
-Target Language: ${formData.language}
-Subject: ${formData.subject || 'General Education'}`;
-
-          let tools = undefined;
-
-          // Automatically derive effective competency if field is empty
-          const effectiveCompetency = formData.competency.trim() || 
-            (formData.subject.trim() 
-              ? `Demonstrate understanding and master core competencies in ${formData.subject}.` 
-              : "Demonstrate understanding of key curriculum principles and apply critical problem-solving strategies.");
-
-          if (file) {
-            const base64Data = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result.split(',')[1]);
-              reader.onerror = (err) => reject(err);
-              reader.readAsDataURL(file);
-            });
-
-            let mimeType = file.type || 'application/octet-stream';
-            if (file.name.endsWith('.pdf')) mimeType = 'application/pdf';
-            else if (file.name.endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-            else if (file.name.endsWith('.doc')) mimeType = 'application/msword';
-
-            systemPrompt += `\nUse the reference document content as the key blueprint foundation.`;
-
-            payloadContents = [{
-              role: "user",
-              parts: [
-                { text: `Synthesize ${count}-session lesson matrix for Grade ${formData.gradeSection || 'Level'}, Term ${formData.termWeek || '1'}. Competency: "${effectiveCompetency}". Integrate subjects: "${formData.integrationSubjects}"` },
-                { inlineData: { mimeType, data: base64Data } }
-              ]
-            }];
-          } else {
-            systemPrompt += `\nUnpack competency into ${count} specific session objectives and utilize search tools to match DepEd LR portal standards.`;
-            tools = [{ "google_search": {} }];
-
-            payloadContents = [{
-              role: "user",
-              parts: [{ text: `Generate ${count}-session plan for Grade ${formData.gradeSection || 'Level'}, Term ${formData.termWeek || '1'} with competency: "${effectiveCompetency}". Specifically integrate subjects: "${formData.integrationSubjects}".` }]
-            }];
-          }
-
-          const payload = {
-            contents: payloadContents,
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: schema
-            }
-          };
-
-          if (tools) payload.tools = tools;
-
-          const apiUrl = '/api/generate';
-
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          const result = await response.json();
-
-          if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-            setGeneratedData(JSON.parse(result.candidates[0].content.parts[0].text));
-            setStatus('done');
-          } else {
-            throw new Error("AI payload synthesis returned invalid format.");
-          }
-
-        } catch (err) {
-          console.error("Synthesis error:", err);
-          
-          // Generate fallback array based on target session count
-          const makeArray = (templateFn) => Array.from({ length: count }, (_, i) => templateFn(i + 1));
-
-          setGeneratedData({
-            lessonName: `Core Matrix: ${formData.subject || 'Cybernetics & Technology'}`,
-            competency: formData.competency || "Demonstrate understanding of key curriculum principles and apply problem-solving protocols.",
-            objectives: makeArray(i => `Session ${i}: Identify foundational components and key vocabulary through diagnostic analysis.`),
-            learnerContext: "Learners demonstrate elevated visual-spatial processing and respond well to collaborative, hands-on tasks. Barriers include abstract conceptualization without contextual anchors. Strategy: Use visual aids and peer scaffolding.",
-            preLesson: makeArray(i => `Diagnostic warm-up and concept review for Session ${i}.`),
-            flow: makeArray(i => `1. Direct Instruction (15m): Present Session ${i} concepts.\n2. Guided Practice (20m): Solve exercises.\n3. Independent Task (10m): Complete worksheet.\n4. Synthesis (5m): Exit ticket review.`),
-            resources: makeArray(i => `DepEd LR Guide, slide deck, projector, Session ${i} worksheets.`),
-            opportunities: makeArray(i => `• Edukasyon sa Pagpapakatao (EsP): Practice intellectual honesty, accountability, and ethical reasoning during Session ${i}.\n• Science & ICT: Apply analytical methods and utilize digital tools for verifying information.\n• Peace Education & GAD: Promote inclusive collaboration and respectful communication during group exercises.`),
-            formativeAssessment: makeArray(i => `1. Session ${i} Question 1?\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n2. Session ${i} Question 2?\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n3. Session ${i} Question 3?\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n4. Session ${i} Question 4?\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n5. Session ${i} Question 5?\nA) Option A\nB) Option B\nC) Option C\nD) Option D`),
-            extendedLearning: makeArray(i => `Session ${i} extended application activity and DepEd portal study module.`)
-          });
-          setError("Generated structured lesson plan template based on standard DepEd requirements.");
-          setStatus('done');
-        }
-      };
-
-      const exportToWord = async () => {
-        if (!generatedData) return;
-        setIsExporting(true);
-        
-        try {
-          let docxLib = window.docx;
-          if (!docxLib) {
-            await new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.src = 'https://unpkg.com/docx@8.2.3/build/index.umd.js';
-              script.onload = () => resolve();
-              script.onerror = () => reject(new Error('DOCX library download failed.'));
-              document.head.appendChild(script);
-            });
-            docxLib = window.docx;
-          }
-
-          const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun } = docxLib;
-
-          const numCols = formData.numSessions || (generatedData.objectives ? generatedData.objectives.length : 5);
-          const totalCols = numCols + 1;
-
-          const tr = (text, options = {}) => new TextRun({ text: typeof text === 'string' ? text : String(text || " "), size: 22, ...options });
-          const pg = (children, options = {}) => new Paragraph({ children, ...options });
-
-          const safeN = (arr) => {
-            const res = Array.isArray(arr) ? [...arr] : [];
-            while (res.length < numCols) res.push(" ");
-            return res.slice(0, numCols);
-          };
-
-          const createCell = (text, colSpan = 1, options = {}) => {
-            let paragraphs = [];
-            const safeText = typeof text === 'string' ? text : String(text || " ");
-            if (safeText.trim() || safeText === " ") {
-              paragraphs = safeText.split('\n').map(line => pg([tr(line, { bold: options.bold, italic: options.italic })], { alignment: options.alignment || "left" }));
-            }
-            return new TableCell({
-              columnSpan: colSpan,
-              shading: options.bg ? { fill: options.bg } : undefined,
-              verticalAlign: "top",
-              margins: { top: 113, bottom: 113, left: 113, right: 113 },
-              children: paragraphs.length ? paragraphs : [pg([tr(" ")])]
-            });
-          };
-
-          const complexCell = (paragraphs, colSpan = 1, bg = undefined) => new TableCell({
-            columnSpan: colSpan,
-            shading: bg ? { fill: bg } : undefined,
-            verticalAlign: "top",
-            margins: { top: 113, bottom: 113, left: 113, right: 113 },
-            children: Array.isArray(paragraphs) && paragraphs.length > 0 ? paragraphs : [pg([tr(" ")])]
-          });
-
-          // Build dynamic sessions array
-          const sessionIndices = Array.from({ length: numCols }, (_, i) => i + 1);
-
-          // Reflection prompts
-          const reflectionPrompts = [
-            "Did learners grasp core concept?",
-            "Did practice lead to independence?",
-            "Which task was most challenging?",
-            "Did formative evaluation align?",
-            "What % reached proficiency?",
-            "How can instruction be improved?"
-          ];
-
-          const prepColSpan = Math.floor(totalCols / 2);
-          const checkColSpan = totalCols - prepColSpan;
-
-          const table = new Table({
-            width: { size: 100, type: "pct" },
-            rows: [
-              new TableRow({ children: [createCell(`Grade ${formData.gradeSection.split('-')[0] || '_'} ${formData.termWeek || 'Term _ Week _'} LESSON PLAN`, totalCols, { bg: "F3F4F6", bold: true })] }),
-              new TableRow({ children: [createCell("Name of Lesson", 1, { bold: true }), createCell(generatedData.lessonName, numCols)] }),
-              new TableRow({ children: [createCell("Learning Area/s", 1, { bold: true }), createCell(formData.subject || '', numCols)] }),
-              new TableRow({ children: [createCell("Designed by Teacher/s", 1, { bold: true }), createCell(formData.preparedBy, numCols)] }),
-              new TableRow({ children: [createCell("Designed for which Grade Level and Section", 1, { bold: true }), createCell(formData.gradeSection, numCols)] }),
-              new TableRow({
-                children: [
-                  createCell("No. of Sessions", 1, { bg: "F3F4F6", bold: true, alignment: "center" }),
-                  ...sessionIndices.map(i => createCell(`Session ${i}`, 1, { bg: "F3F4F6", bold: true, alignment: "center" }))
-                ]
-              }),
-              new TableRow({
-                children: [
-                  complexCell([pg([tr("References", { bold: true })]), pg([tr("(books, websites, toolkits, etc.)", { size: 16, color: "555555" })])]),
-                  complexCell((generatedData.resources || []).map(res => pg([tr(res || " ")], { bullet: { level: 0 } })), numCols)
-                ]
-              }),
-              new TableRow({
-                children: [
-                  complexCell([pg([tr("Declaration of AI use", { bold: true })]), pg([tr("Cite how AI was used in the formulation of the lesson plan. See DO 3, 2026 Annex A.", { size: 16, color: "555555" })])]),
-                  complexCell([pg([tr("Artificial Intelligence (AI) tools were used to assist in the preparation of this lesson plan, particularly in generating ideas, improving clarity of instructions, and organizing learning activities aligned with the MELCs. All AI-assisted outputs were carefully reviewed, validated, and contextualized by the teacher to ensure accuracy, appropriateness, and alignment with DepEd standards.")], { alignment: "both" })], numCols)
-                ]
-              }),
-              new TableRow({
-                children: [
-                  createCell("Intentions.", 1, { bold: true }),
-                  complexCell([pg([tr("Meaningful learning experiences are anchored in how we frame them. Start by deciding what you want learners to master by the end of the lesson - keep it clear and simple.", { italic: true, color: "333333" })], { alignment: "both" })], numCols, "F9FAFB")
-                ]
-              }),
-              new TableRow({ children: [createCell("Learning Competency:", 1, { bold: true }), createCell(generatedData.competency, numCols)] }),
-              new TableRow({ children: [createCell("Learning Objectives:", 1, { bold: true }), ...safeN(generatedData.objectives).map(obj => createCell(obj))] }),
-              new TableRow({ children: [createCell("Learner Context:", 1, { bold: true }), createCell(generatedData.learnerContext, numCols)] }),
-              new TableRow({
-                children: [
-                  createCell("Learning Experience.", 1, { bold: true }),
-                  complexCell([pg([tr("A learning experience is like a thoughtfully designed journey. Each activity and interaction builds towards meaningful understanding and growth.", { italic: true, color: "333333" })], { alignment: "both" })], numCols, "F9FAFB")
-                ]
-              }),
-              new TableRow({ children: [createCell("Pre-Lesson:", 1, { bold: true }), ...safeN(generatedData.preLesson).map(item => createCell(item))] }),
-              new TableRow({ children: [createCell("Flow:", 1, { bold: true }), ...safeN(generatedData.flow).map(item => createCell(item))] }),
-              new TableRow({ children: [createCell("Learning Resources:", 1, { bold: true }), ...safeN(generatedData.resources).map(item => createCell(item))] }),
-              new TableRow({ children: [createCell("Opportunities for integration:", 1, { bold: true }), ...safeN(generatedData.opportunities).map(item => createCell(item))] }),
-              new TableRow({
-                children: [
-                  createCell("Assessment.", 1, { bold: true }),
-                  complexCell([pg([tr("Assessments reveal what learners have gained and what they still need help with.", { italic: true, color: "333333" })], { alignment: "both" })], numCols, "F9FAFB")
-                ]
-              }),
-              new TableRow({ children: [createCell("Formative Assessment:", 1, { bold: true }), ...safeN(generatedData.formativeAssessment).map(mcqs => createCell(mcqs))] }),
-              new TableRow({
-                children: [
-                  createCell("Ways Forward.", 1, { bold: true }),
-                  complexCell([pg([tr("Meaningful learning can also happen beyond the classroom - for both the learners and the teacher.", { italic: true, color: "333333" })], { alignment: "both" })], numCols, "F9FAFB")
-                ]
-              }),
-              new TableRow({ children: [createCell("Extended learning opportunities:", 1, { bold: true }), ...safeN(generatedData.extendedLearning).map(item => createCell(item))] }),
-              new TableRow({
-                children: [
-                  createCell("Reflections:", 1, { bold: true }),
-                  ...sessionIndices.map((idx) => complexCell([
-                    pg([tr("(To be filled out after lesson)", { italic: true, color: "777777", size: 18 })]),
-                    pg([tr("Prompt: ", { bold: true, size: 18 }), tr(reflectionPrompts[(idx - 1) % reflectionPrompts.length], { size: 18 })])
-                  ]))
-                ]
-              }),
-              new TableRow({
-                children: [
-                  complexCell([
-                    pg([tr("Prepared by:", { bold: true })]),
-                    pg([tr(" ")]),
-                    pg([tr(formData.preparedBy, { bold: true })], { alignment: "center" }),
-                    pg([tr("Teacher")], { alignment: "center" })
-                  ], prepColSpan),
-                  complexCell([
-                    pg([tr("Checked by:", { bold: true })]),
-                    pg([tr(" ")]),
-                    pg([tr(formData.checkedBy, { bold: true })], { alignment: "center" }),
-                    pg([tr("Principal / Head")], { alignment: "center" })
-                  ], checkColSpan)
-                ]
-              })
-            ]
-          });
-
-          const doc = new Document({
-            sections: [{
-              properties: { page: { size: { orientation: "landscape" }, margin: { top: 1440, right: 720, bottom: 720, left: 1440 } } },
-              children: [table],
-            }]
-          });
-
-          const blob = await Packer.toBlob(doc);
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `CYBER_DLL_${formData.subject || 'Exemplar'}_${numCols}Sessions_Grade${formData.gradeSection || 'Level'}.docx`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error("Export Error:", err);
-          alert(`Export failed: ${err.message}`);
-        } finally {
-          setIsExporting(false);
-        }
-      };
-
-      const CyberInputLabel = ({ children }) => (
-        <label className={`block text-[11px] font-orbitron uppercase tracking-widest ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-700'} mb-1.5 flex items-center gap-1.5 font-bold`}>
-          <span className={`w-1.5 h-1.5 ${theme === 'dark' ? 'bg-[#00ff88]' : 'bg-emerald-600'} rounded-full inline-block animate-ping`}></span>
-          {children}
-        </label>
-      );
-
-      const cyberInputStyle = theme === 'dark' 
-        ? "w-full bg-[#0a0f1d]/90 border border-[#00ff88]/30 focus:border-[#00ff88] text-slate-100 rounded-lg p-3 text-sm outline-none shadow-[0_0_15px_rgba(0,255,136,0.1)] focus:shadow-[0_0_25px_rgba(0,255,136,0.3)] transition-all font-rajdhani font-semibold"
-        : "w-full bg-slate-50 border border-slate-300 focus:border-emerald-600 text-slate-900 rounded-lg p-3 text-sm outline-none shadow-sm focus:ring-2 focus:ring-emerald-500/20 transition-all font-rajdhani font-semibold";
-
-      const numCols = generatedData 
-        ? (generatedData.objectives ? generatedData.objectives.length : formData.numSessions) 
-        : formData.numSessions;
-      const totalCols = numCols + 1;
-      const colWidthPercent = 85 / numCols;
-
-      const reflectionPrompts = [
-        "Did learners grasp core concept?",
-        "Did practice lead to independence?",
-        "Which task was most challenging?",
-        "Did formative evaluation align?",
-        "What % reached proficiency?",
-        "How can instruction be improved?"
-      ];
-
-      return (
-        <div className={`relative min-h-screen w-full flex flex-col lg:flex-row ${theme === 'dark' ? 'bg-[#050811] text-slate-100' : 'bg-slate-100 text-slate-800'} overflow-hidden font-rajdhani transition-colors duration-300`}>
-          
-          {theme === 'dark' && <FuturisticBackground />}
-
-          {/* Mobile Cyber Bar */}
-          <div className={`lg:hidden flex items-center justify-between p-4 ${theme === 'dark' ? 'bg-[#0a0f1d]/90 border-[#00ff88]/30' : 'bg-white/90 border-slate-200'} backdrop-blur-md border-b z-50`}>
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-[#00ff88]/10 border-[#00ff88]/40 text-[#00ff88]' : 'bg-emerald-100 border-emerald-300 text-emerald-800'}`}>
-              {isSidebarOpen ? <CrossIcon /> : <CpuIcon />}
-            </button>
-            <div className={`flex items-center gap-2 font-orbitron font-bold text-sm tracking-wider ${theme === 'dark' ? 'text-[#00ff88] drop-shadow-[0_0_8px_#00ff88]' : 'text-emerald-700'}`}>
-              <RobotIcon className="w-5 h-5" /> ILAW CYBER-ENGINE
-            </div>
-            <button onClick={toggleTheme} className={`p-2 rounded-lg border ${theme === 'dark' ? 'bg-slate-800 text-amber-400 border-slate-700' : 'bg-slate-200 text-slate-800 border-slate-300'}`}>
-              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-          </div>
-
-          {/* Left Cyber Control Center Panel */}
-          <div className={`absolute lg:relative top-0 left-0 h-full z-40 transition-all duration-500 ease-in-out flex flex-col ${theme === 'dark' ? 'bg-[#070c18]/95 border-[#00ff88]/30 shadow-[0_0_50px_rgba(0,255,136,0.15)]' : 'bg-white/95 border-slate-200 shadow-xl'} border-r 
-            ${isSidebarOpen ? 'w-[88%] sm:w-[400px] translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:border-r-0'}
-          `}>
-            <div className={`flex flex-col h-full w-full p-6 sm:p-7 overflow-y-auto ${!isSidebarOpen && 'lg:hidden'}`}>
-              
-              {/* Header Title & Theme Toggle HUD */}
-              <div className={`flex items-center justify-between gap-2 mb-6 p-3 ${theme === 'dark' ? 'bg-[#0a0f1d] border-[#00ff88]/40 shadow-[0_0_20px_rgba(0,255,136,0.15)]' : 'bg-slate-50 border-slate-200 shadow-sm'} border rounded-xl relative overflow-hidden`}>
-                <div className="flex items-center gap-3">
-                  <div className={`p-2.5 ${theme === 'dark' ? 'bg-[#00ff88]/20 border-[#00ff88] text-[#00ff88]' : 'bg-emerald-100 border-emerald-500 text-emerald-700'} border rounded-lg animate-neon-pulse`}>
-                    <RobotIcon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h1 className={`text-base font-orbitron font-extrabold tracking-wider flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
-                      ILAW CORE <span className={`text-[10px] ${theme === 'dark' ? 'bg-[#00ff88] text-black' : 'bg-emerald-600 text-white'} px-1.5 py-0.5 rounded font-bold`}>v3.0</span>
-                    </h1>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-700'} font-semibold tracking-wide`}>OPERATOR: JUNGIE B. ESTRIBOR</p>
-                  </div>
-                </div>
-
-                {/* Theme Mode Switcher */}
-                <button 
-                  onClick={toggleTheme} 
-                  title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-                  className={`p-2 rounded-lg transition-all border flex items-center gap-1.5 text-xs font-orbitron font-bold ${
-                    theme === 'dark' 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-amber-400/40' 
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
-                  }`}
-                >
-                  {theme === 'dark' ? <SunIcon className="w-4 h-4 text-amber-300" /> : <MoonIcon className="w-4 h-4 text-slate-700" />}
-                  <span className="hidden sm:inline">{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
-                </button>
-              </div>
-
-              {/* Input Form Fields */}
-              <div className="space-y-4 flex-1">
-                
-                {/* Session Count Selector Dropdown */}
-                <div className={`${theme === 'dark' ? 'bg-[#00ff88]/5 border-[#00ff88]/30' : 'bg-emerald-50/70 border-emerald-200'} p-3 rounded-xl border`}>
-                  <CyberInputLabel>NUMBER OF SESSIONS (MATRIX COLS)</CyberInputLabel>
-                  <select 
-                    name="numSessions" 
-                    value={formData.numSessions} 
-                    onChange={handleInputChange} 
-                    className={`${cyberInputStyle} font-bold ${theme === 'dark' ? 'text-[#00ff88] border-[#00ff88]' : 'text-emerald-800 border-emerald-400'}`}
-                  >
-                    <option value={1} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>1 Session (Single Day Matrix)</option>
-                    <option value={2} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>2 Sessions (Block Matrix)</option>
-                    <option value={3} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>3 Sessions (Modular Plan)</option>
-                    <option value={4} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>4 Sessions (Standard Week)</option>
-                    <option value={5} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>5 Sessions (Full 5-Day DLL)</option>
-                    <option value={6} className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : "text-slate-800"}>6 Sessions (Extended Matrix)</option>
-                  </select>
-                  <p className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
-                    ⚡ Auto-formats AI synthesis and document columns.
-                  </p>
-                </div>
-
-                {/* Pedagogical AI Strategy Selector */}
-                <div className={`${theme === 'dark' ? 'bg-[#00f0ff]/5 border-[#00f0ff]/30' : 'bg-sky-50/70 border-sky-200'} p-3 rounded-xl border`}>
-                  <label className={`block text-[11px] font-orbitron uppercase tracking-widest ${theme === 'dark' ? 'text-[#00f0ff]' : 'text-sky-800'} mb-1.5 flex items-center gap-1.5 font-bold`}>
-                    <BrainIcon className="w-4 h-4 text-[#00f0ff]" />
-                    PEDAGOGICAL AI STRATEGY
-                  </label>
-                  <select 
-                    name="pedagogicalStrategy" 
-                    value={formData.pedagogicalStrategy} 
-                    onChange={handleInputChange} 
-                    className={`${cyberInputStyle} font-semibold ${theme === 'dark' ? 'text-[#00f0ff] border-[#00f0ff]/50' : 'text-sky-900 border-sky-300'}`}
-                  >
-                    <option value="Explicit Teaching (Direct Instruction)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Explicit Teaching (Direct Instruction)</option>
-                    <option value="5Es Constructivist Model (Engage, Explore, Explain, Elaborate, Evaluate)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>5Es Constructivist Model (5Es)</option>
-                    <option value="Inquiry-Based Learning (IBL)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Inquiry-Based Learning (IBL)</option>
-                    <option value="Problem-Based & Project-Based Learning (PBL)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Problem-Based / Project-Based (PBL)</option>
-                    <option value="Differentiated Instruction & Scaffolded Learning" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Differentiated & Scaffolded Learning</option>
-                    <option value="Game-Based & Interactive Learning" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Game-Based & Gamified Learning</option>
-                    <option value="Collaborative & Cooperative Learning (4Ks)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Collaborative & Cooperative Learning</option>
-                    <option value="Universal Design for Learning (UDL)" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Universal Design for Learning (UDL)</option>
-                  </select>
-                  <p className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
-                    🧠 Guides AI in designing session flow, activities, and question styles.
-                  </p>
-                </div>
-
-                {/* Specific Cross-Curricular Subjects for Integration */}
-                <div className={`${theme === 'dark' ? 'bg-[#ff0055]/5 border-[#ff0055]/30' : 'bg-rose-50/70 border-rose-200'} p-3 rounded-xl border`}>
-                  <label className={`block text-[11px] font-orbitron uppercase tracking-widest ${theme === 'dark' ? 'text-[#ff0055]' : 'text-rose-800'} mb-1.5 flex items-center gap-1.5 font-bold`}>
-                    <LayersIcon className="w-4 h-4 text-[#ff0055]" />
-                    OPPORTUNITIES FOR INTEGRATION (SUBJECTS)
-                  </label>
-                  <input 
-                    type="text" 
-                    name="integrationSubjects" 
-                    placeholder="e.g. EsP / Values Ed, Science, Math, ICT, Peace Education, AP" 
-                    value={formData.integrationSubjects} 
-                    onChange={handleInputChange} 
-                    className={`${cyberInputStyle} font-semibold mb-2 ${theme === 'dark' ? 'border-[#ff0055]/40 text-[#ff0055]' : 'border-rose-300 text-rose-900'}`} 
-                  />
-                  <p className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} mb-2`}>
-                    🎯 Click tags below to add/remove target subjects for AI cross-curricular integration:
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {AVAILABLE_SUBJECT_TAGS.map((tag) => {
-                      const active = formData.integrationSubjects.toLowerCase().includes(tag.split(' ')[0].toLowerCase());
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => toggleSubjectTag(tag)}
-                          className={`text-[10px] font-orbitron font-semibold px-2 py-0.5 rounded-md transition-all border ${
-                            active
-                              ? theme === 'dark'
-                                ? 'bg-[#ff0055]/20 border-[#ff0055] text-white shadow-[0_0_10px_rgba(255,0,85,0.4)]'
-                                : 'bg-rose-600 border-rose-600 text-white'
-                              : theme === 'dark'
-                                ? 'bg-slate-900/60 border-slate-700 text-slate-400 hover:border-[#ff0055]/50'
-                                : 'bg-white border-slate-300 text-slate-600 hover:border-rose-400'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <CyberInputLabel>TARGET LANGUAGE</CyberInputLabel>
-                  <select name="language" value={formData.language} onChange={handleInputChange} className={cyberInputStyle}>
-                    <option value="English" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>English Protocol</option>
-                    <option value="Filipino" className={theme === 'dark' ? "bg-[#0a0f1d] text-white" : ""}>Filipino Protocol</option>
-                  </select>
-                </div>
-
-                <div>
-                  <CyberInputLabel>SUBJECT / LEARNING AREA</CyberInputLabel>
-                  <input type="text" name="subject" placeholder="e.g. MEDIA AND INFORMATION LITERACY" value={formData.subject} onChange={handleInputChange} className={cyberInputStyle} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <CyberInputLabel>GRADE & SECTION</CyberInputLabel>
-                    <input type="text" name="gradeSection" placeholder="12 - CYBER" value={formData.gradeSection} onChange={handleInputChange} className={cyberInputStyle} />
-                  </div>
-                  <div>
-                    <CyberInputLabel>TERM & WEEK</CyberInputLabel>
-                    <input type="text" name="termWeek" placeholder="Term 1, Wk 1" value={formData.termWeek} onChange={handleInputChange} className={cyberInputStyle} />
-                  </div>
-                </div>
-
-                <div className={`border-t ${theme === 'dark' ? 'border-[#00ff88]/20' : 'border-slate-200'} my-3`}></div>
-
-                <div>
-                  <CyberInputLabel>LEARNING COMPETENCY (MANUAL)</CyberInputLabel>
-                  <textarea name="competency" placeholder="Paste DepEd MELC standard text..." value={formData.competency} onChange={handleInputChange} rows={3} className={`${cyberInputStyle} resize-none`} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <CyberInputLabel>PREPARED BY</CyberInputLabel>
-                    <input type="text" name="preparedBy" value={formData.preparedBy} onChange={handleInputChange} className={cyberInputStyle} />
-                  </div>
-                  <div>
-                    <CyberInputLabel>CHECKED BY</CyberInputLabel>
-                    <input type="text" name="checkedBy" value={formData.checkedBy} onChange={handleInputChange} className={cyberInputStyle} />
-                  </div>
-                </div>
-
-                {/* Cyber File Upload */}
-                <div className="pt-2">
-                  <CyberInputLabel>REFERENCE BLUEPRINT (.DOC/.PDF)</CyberInputLabel>
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".doc,.docx,.pdf" className="hidden" />
-                  
-                  {!file ? (
-                    <div onClick={() => fileInputRef.current.click()} className={`border border-dashed ${theme === 'dark' ? 'border-[#00ff88]/50 bg-[#00ff88]/5 hover:bg-[#00ff88]/15 hover:border-[#00ff88]' : 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-500'} transition-all duration-300 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer text-center group`}>
-                      <UploadIcon className={`w-6 h-6 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-600'} mb-1 group-hover:scale-125 transition-transform`} />
-                      <p className={`text-xs font-orbitron font-bold ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-700'}`}>UPLOAD EXEMPLAR FILE</p>
-                      <p className={`text-[10px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>.DOC, .DOCX, OR .PDF</p>
-                    </div>
-                  ) : (
-                    <div className={`border ${theme === 'dark' ? 'border-[#00ff88] bg-[#00ff88]/10' : 'border-emerald-500 bg-emerald-50'} rounded-xl p-3 flex items-center justify-between`}>
-                      <div className="flex items-center gap-2.5 overflow-hidden">
-                        <FileIcon className={`w-5 h-5 ${theme === 'dark' ? 'text-[#00f0ff]' : 'text-emerald-600'} flex-shrink-0`} />
-                        <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-800'} truncate`}>{file.name}</span>
-                      </div>
-                      <button onClick={() => setFile(null)} className="text-red-400 hover:text-red-300 p-1">
-                        <CrossIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <div className="pt-6 mt-auto">
-                {error && (
-                  <div className="mb-3 p-3 bg-red-950/80 border border-red-500/50 text-red-300 text-xs rounded-lg font-semibold animate-pulse">
-                    ⚠️ {error}
-                  </div>
-                )}
-
-                {status !== 'generating' ? (
-                  <button onClick={handleGenerate} className={`w-full ${theme === 'dark' ? 'bg-gradient-to-r from-[#00ff88] to-[#00f0ff] text-black shadow-[0_0_25px_rgba(0,255,136,0.4)] hover:shadow-[0_0_40px_rgba(0,255,136,0.7)]' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg'} font-orbitron font-extrabold text-sm py-3.5 px-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 tracking-wider`}>
-                    <ZapIcon className={`w-5 h-5 ${theme === 'dark' ? 'fill-black' : 'fill-white'}`} /> SYNTHESIZE {formData.numSessions}-SESSION MATRIX
-                  </button>
-                ) : (
-                  <button disabled className={`w-full ${theme === 'dark' ? 'bg-slate-900 border-[#00ff88]/40 text-[#00ff88]' : 'bg-slate-200 border-slate-300 text-emerald-800'} border font-orbitron font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-wait`}>
-                    <LoaderIcon className="w-5 h-5" /> AI ENGINE SYNTHESIZING...
-                  </button>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          {/* Sidebar Toggle Handle */}
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`hidden lg:flex absolute top-1/2 -translate-y-1/2 z-40 ${theme === 'dark' ? 'bg-[#070c18] border-[#00ff88]/50 text-[#00ff88]' : 'bg-white border-slate-300 text-emerald-700'} border shadow-md p-2 rounded-r-xl hover:scale-110 transition-all ${isSidebarOpen ? 'left-[400px]' : 'left-0'}`}>
-            <ChevronIcon direction={isSidebarOpen ? "left" : "right"} />
-          </button>
-
-          {/* Main Output Canvas */}
-          <div className={`flex-1 flex flex-col relative h-[calc(100vh-60px)] lg:h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#050811]/60' : 'bg-slate-100'}`}>
-            
-            {status !== 'done' ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center h-full z-10">
-                {status === 'generating' ? (
-                  <div className="flex flex-col items-center max-w-md w-full">
-                    <div className="relative mb-6">
-                      <div className={`w-24 h-24 border-4 ${theme === 'dark' ? 'border-[#00ff88]/20 border-t-[#00ff88]' : 'border-emerald-200 border-t-emerald-600'} rounded-full animate-spin`}></div>
-                      <RobotIcon className={`w-10 h-10 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-600'} absolute inset-0 m-auto animate-pulse`} />
-                    </div>
-                    <h2 className={`text-2xl font-orbitron font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'} tracking-widest mb-2`}>NEURAL SYNTHESIS IN PROGRESS</h2>
-                    <p className={`${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} text-sm`}>Applying strategy <strong>"{formData.pedagogicalStrategy}"</strong> to {formData.numSessions}-session matrix...</p>
-                  </div>
-                ) : (
-                  <div className={`max-w-md border ${theme === 'dark' ? 'border-[#00ff88]/30 bg-[#0a0f1d]/80 shadow-[0_0_40px_rgba(0,255,136,0.15)]' : 'border-slate-200 bg-white shadow-xl'} backdrop-blur-xl p-8 rounded-2xl flex flex-col items-center`}>
-                    <div className={`w-20 h-20 rounded-2xl ${theme === 'dark' ? 'bg-[#00ff88]/10 border-[#00ff88]/40 text-[#00ff88] shadow-[0_0_20px_rgba(0,255,136,0.2)]' : 'bg-emerald-50 border-emerald-300 text-emerald-600'} border flex items-center justify-center mb-4`}>
-                      <RobotIcon className="w-10 h-10" />
-                    </div>
-                    <h2 className={`text-xl font-orbitron font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'} mb-2 tracking-wide`}>SYSTEM READY</h2>
-                    <p className={`${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} text-xs leading-relaxed`}>Select pedagogical strategy and target integration subjects ({formData.numSessions} Sessions Selected) on the left panel to synthesize a compliant DepEd Lesson Exemplar.</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto flex flex-col relative w-full z-10">
-                
-                {/* Cyber Toolbar */}
-                <div className={`sticky top-0 z-30 ${theme === 'dark' ? 'bg-[#070c18]/90 border-[#00ff88]/30 shadow-[0_10px_25px_rgba(0,0,0,0.5)]' : 'bg-white/90 border-slate-200 shadow-md'} backdrop-blur-xl border-b p-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-3`}>
-                  <div>
-                    <h2 className={`text-sm font-orbitron font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'} tracking-widest flex items-center gap-2`}>
-                      <span className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-[#00ff88]' : 'bg-emerald-500'} animate-ping`}></span> {numCols}-SESSION MATRIX GENERATED
-                    </h2>
-                    <p className={`text-[11px] ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-700'} font-semibold`}>Strategy: {formData.pedagogicalStrategy}</p>
-                  </div>
-                  <button onClick={exportToWord} disabled={isExporting} className={`${theme === 'dark' ? 'bg-gradient-to-r from-[#00f0ff] to-[#00ff88] text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:shadow-[0_0_35px_rgba(0,240,255,0.7)]' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'} font-orbitron font-extrabold text-xs py-2.5 px-6 rounded-xl transition-all flex items-center gap-2`}>
-                    {isExporting ? <LoaderIcon className="w-4 h-4" /> : <DownloadIcon className="w-4 h-4" />}
-                    {isExporting ? 'EXPORTING...' : `EXPORT ${numCols}-SESSION WORD (.DOCX)`}
-                  </button>
-                </div>
-
-                {/* Floating AI Cyber Refinement HUD */}
-                <div className={`fixed bottom-6 left-1/2 lg:left-[calc(50%+200px)] -translate-x-1/2 w-[90%] max-w-xl z-40 ${theme === 'dark' ? 'bg-[#070c18]/95 border-[#00ff88] shadow-[0_0_30px_rgba(0,255,136,0.3)]' : 'bg-white/95 border-emerald-500 shadow-2xl'} border rounded-2xl p-2 flex items-center gap-2`}>
-                  <RobotIcon className={`w-6 h-6 ${theme === 'dark' ? 'text-[#00ff88]' : 'text-emerald-600'} ml-3 flex-shrink-0 animate-pulse`} />
-                  <input
-                    type="text"
-                    placeholder="AI Command: e.g. 'Emphasize Science & EsP integration in Session 2'"
-                    value={refinementPrompt}
-                    onChange={(e) => setRefinementPrompt(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
-                    disabled={isRefining}
-                    className={`flex-1 bg-transparent border-none outline-none ${theme === 'dark' ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'} text-xs font-rajdhani font-semibold px-2`}
-                  />
-                  <button onClick={handleRefine} disabled={isRefining || !refinementPrompt.trim()} className={`${theme === 'dark' ? 'bg-[#00ff88] text-black shadow-[0_0_15px_rgba(0,255,136,0.4)]' : 'bg-emerald-600 text-white'} font-orbitron font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5`}>
-                    {isRefining ? <LoaderIcon className="w-4 h-4" /> : 'REFINING'}
-                  </button>
-                </div>
-
-                {/* Pure White Printable Document Canvas with Dynamic Matrix Table */}
-                <div className="p-4 sm:p-8 pb-32 flex justify-center w-full overflow-x-auto">
-                  <div className="bg-white text-black shadow-2xl rounded-sm w-[1123px] min-w-[1123px] p-10 font-serif" style={{ fontFamily: "'Times New Roman', serif" }}>
-                    <table className="w-full border-collapse table-fixed text-xs border border-black">
-                      <colgroup>
-                        <col style={{ width: '15%' }} />
-                        {Array.from({ length: numCols }).map((_, i) => (
-                          <col key={i} style={{ width: `${colWidthPercent}%` }} />
-                        ))}
-                      </colgroup>
-                      <tbody>
-                        <tr>
-                          <th colSpan={totalCols} className="border border-black p-2 bg-gray-200 text-left font-bold text-sm">
-                            Grade {formData.gradeSection.split('-')[0] || '_'} {formData.termWeek || 'Term _ Week _'} LESSON PLAN ({numCols} SESSIONS)
-                          </th>
-                        </tr>
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Name of Lesson</td>
-                          <td colSpan={numCols} className="border border-black p-2">{generatedData.lessonName}</td>
-                        </tr>
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learning Area/s</td>
-                          <td colSpan={numCols} className="border border-black p-2">{formData.subject || ''}</td>
-                        </tr>
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Designed by Teacher/s</td>
-                          <td colSpan={numCols} className="border border-black p-2">{formData.preparedBy}</td>
-                        </tr>
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Designed for Grade & Section</td>
-                          <td colSpan={numCols} className="border border-black p-2">{formData.gradeSection}</td>
-                        </tr>
-
-                        <tr className="bg-gray-100 text-center font-bold">
-                          <td className="border border-black p-2">No. of Sessions</td>
-                          {Array.from({ length: numCols }).map((_, i) => (
-                            <td key={i} className="border border-black p-2">Session {i + 1}</td>
-                          ))}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">References</td>
-                          <td colSpan={numCols} className="border border-black p-2">
-                            <ul className="list-disc pl-4 m-0">
-                              {(generatedData.resources || []).map((res, i) => <li key={i}>{res}</li>)}
-                            </ul>
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Declaration of AI use</td>
-                          <td colSpan={numCols} className="border border-black p-2 text-justify">
-                            Artificial Intelligence (AI) tools were used to assist in the preparation of this lesson plan, particularly in generating ideas, improving clarity of instructions, and organizing learning activities aligned with the MELCs. All AI-assisted outputs were carefully reviewed, validated, and contextualized by the teacher to ensure accuracy, appropriateness, and alignment with DepEd standards.
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Intentions</td>
-                          <td colSpan={numCols} className="border border-black p-2 bg-gray-50 text-[11px] italic text-justify">
-                            Meaningful learning experiences are anchored in how we frame them. Start by deciding what you want learners to master by the end of the lesson - keep it clear and simple.
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learning Competency</td>
-                          <td colSpan={numCols} className="border border-black p-2">{generatedData.competency}</td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learning Objectives</td>
-                          {(generatedData.objectives || []).slice(0, numCols).map((obj, i) => <td key={i} className="border border-black p-2">{obj}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learner Context</td>
-                          <td colSpan={numCols} className="border border-black p-2">{generatedData.learnerContext}</td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learning Experience</td>
-                          <td colSpan={numCols} className="border border-black p-2 bg-gray-50 text-[11px] italic">
-                            A learning experience is like a thoughtfully designed journey. Each activity builds towards meaningful understanding.
-                          </td>
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Pre-Lesson</td>
-                          {(generatedData.preLesson || []).slice(0, numCols).map((item, i) => <td key={i} className="border border-black p-2">{item}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Flow</td>
-                          {(generatedData.flow || []).slice(0, numCols).map((item, i) => <td key={i} className="border border-black p-2 whitespace-pre-wrap">{item}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Learning Resources</td>
-                          {(generatedData.resources || []).slice(0, numCols).map((item, i) => <td key={i} className="border border-black p-2">{item}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Opportunities for integration</td>
-                          {(generatedData.opportunities || []).slice(0, numCols).map((item, i) => <td key={i} className="border border-black p-2 whitespace-pre-wrap">{item}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Formative Assessment</td>
-                          {(generatedData.formativeAssessment || []).slice(0, numCols).map((mcqs, i) => <td key={i} className="border border-black p-2 whitespace-pre-wrap">{mcqs}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Extended learning</td>
-                          {(generatedData.extendedLearning || []).slice(0, numCols).map((item, i) => <td key={i} className="border border-black p-2">{item}</td>)}
-                        </tr>
-
-                        <tr>
-                          <td className="border border-black p-2 font-bold">Reflections</td>
-                          {Array.from({ length: numCols }).map((_, i) => (
-                            <td key={i} className="border border-black p-2 align-top">
-                              <span className="italic text-gray-500 text-[10px]">(To be filled after lesson)</span><br/><br/>
-                              <span className="font-bold">Prompt:</span> {reflectionPrompts[i % reflectionPrompts.length]}
-                            </td>
-                          ))}
-                        </tr>
-
-                        <tr>
-                          <td colSpan={Math.floor(totalCols / 2)} className="border border-black p-4 text-center">
-                            <span className="font-bold block text-left mb-6">Prepared by:</span>
-                            <span className="font-bold border-b border-black uppercase px-6">{formData.preparedBy}</span><br/>Teacher
-                          </td>
-                          <td colSpan={totalCols - Math.floor(totalCols / 2)} className="border border-black p-4 text-center">
-                            <span className="font-bold block text-left mb-6">Checked by:</span>
-                            <span className="font-bold border-b border-black uppercase px-6">{formData.checkedBy}</span><br/>Principal / Head
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-              </div>
-            )}
-          </div>
-
-        </div>
-      );
-    }
-
-    function GatekeeperApp() {
-      const [appStatus, setAppStatus] = useState('initializing'); // initializing, locked, pending, approved, admin_login, admin_dashboard
-      const [userName, setUserName] = useState('');
-      const [userId, setUserId] = useState(null);
-      const [adminPasscode, setAdminPasscode] = useState('');
-      const [requests, setRequests] = useState([]);
-      const [fbRefs, setFbRefs] = useState(null);
-      const [gatekeeperError, setGatekeeperError] = useState(null); // Added error state for troubleshooting
-
-      useEffect(() => {
-        const initAuth = async () => {
-          if (!window.FB_MODULES) {
-            console.warn("Firebase modules not loaded. Bypassing gatekeeper.");
-            setAppStatus('approved');
-            return;
-          }
-          try {
-            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, onSnapshot } = window.FB_MODULES;
-            const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ilaw-app';
-
-            if (!config) {
-              console.warn("No Firebase config found. Bypassing gatekeeper.");
-              setAppStatus('approved');
-              return;
-            }
-
-            const app = initializeApp(config);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            setFbRefs({ db, appId });
-
-            const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            if (token) {
-              await signInWithCustomToken(auth, token);
-            } else {
-              await signInAnonymously(auth);
-            }
-
-            const uid = auth.currentUser.uid;
-            setUserId(uid);
-
-            // Listen to user's access status
-            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'access_requests', uid);
-            onSnapshot(userDocRef, (docSnap) => {
-              if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.status === 'approved') {
-                  setAppStatus('approved');
-                } else if (appStatus !== 'admin_login' && appStatus !== 'admin_dashboard') {
-                  setAppStatus('pending');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabino Ang | ICT Educator & Tech Support Specialist</title>
+    
+    <!-- Google Fonts: Orbitron (Futuristic Titles), Space Grotesk (Subheadings), JetBrains Mono & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&family=Orbitron:wght@500;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Orbitron', 'sans-serif'],
+                        tech: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#050503',
+                            card: '#12110a',
+                            border: '#2a2718',
+                            yellow: '#facc15',
+                            neon: '#ffe600',
+                            amber: '#f59e0b',
+                            gold: '#d97706',
+                            glow: 'rgba(250, 204, 21, 0.25)'
+                        },
+                        // Map cyan utilities to a vibrant Electric Yellow & Gold palette
+                        cyan: {
+                            50: '#fefce8',
+                            100: '#fef9c3',
+                            200: '#fef08a',
+                            300: '#fde047',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                            700: '#a16207',
+                            800: '#854d0e',
+                            900: '#713f12',
+                            950: '#3a2003',
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
+                        'scanline': 'scanline 8s linear infinite',
+                        'float': 'float 5s ease-in-out infinite',
+                        'cyber-shimmer': 'cyberShimmer 2s linear infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.4', filter: 'drop-shadow(0 0 15px rgba(250, 204, 21, 0.4))' },
+                            '50%': { opacity: '0.9', filter: 'drop-shadow(0 0 25px rgba(255, 230, 0, 0.8))' },
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        cyberShimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        }
+                    }
                 }
-              } else if (appStatus !== 'admin_login' && appStatus !== 'admin_dashboard') {
-                setAppStatus('locked');
-              }
-            }, (err) => {
-              console.error("Gatekeeper error:", err);
-              setAppStatus('locked');
-            });
-
-          } catch (error) {
-            console.error("Firebase init failed", error);
-            setAppStatus('locked'); // Fail-closed for security
-          }
-        };
-        initAuth();
-      }, []);
-
-      const handleRequestAccess = async () => {
-        if (!userName.trim() || !fbRefs || !userId) return;
-        const { setDoc, doc } = window.FB_MODULES;
-        setGatekeeperError(null);
-        try {
-          const userDocRef = doc(fbRefs.db, 'artifacts', fbRefs.appId, 'public', 'data', 'access_requests', userId);
-          await setDoc(userDocRef, {
-            name: userName,
-            status: 'pending',
-            timestamp: new Date().toISOString()
-          });
-          setAppStatus('pending');
-        } catch(e) {
-          console.error("Failed to request access:", e);
-          setGatekeeperError("Failed to submit request. Check network or permissions.");
+            }
         }
-      };
-
-      const handleAdminLogin = () => {
-        if (adminPasscode === 'ILAW-ADMIN-2026') {
-          setAppStatus('admin_dashboard');
-          setGatekeeperError(null);
-        } else {
-          setAdminPasscode('ACCESS DENIED');
-          setTimeout(() => setAdminPasscode(''), 1500);
+    </script>
+    
+    <style>
+        /* Cyber HUD & Futuristic Glass Card Styling */
+        .cyber-glass {
+            background: rgba(18, 17, 10, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(250, 204, 21, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
         }
-      };
-
-      // REAL-TIME DASHBOARD LISTENER
-      useEffect(() => {
-        let unsubscribe = () => {};
-        if (appStatus === 'admin_dashboard' && fbRefs) {
-          const { collection, onSnapshot } = window.FB_MODULES;
-          const reqCol = collection(fbRefs.db, 'artifacts', fbRefs.appId, 'public', 'data', 'access_requests');
-          
-          unsubscribe = onSnapshot(reqCol, (snap) => {
-            const reqs = [];
-            snap.forEach(d => reqs.push({ id: d.id, ...d.data() }));
-            // Sort by newest first
-            reqs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            setRequests(reqs);
-          }, (err) => {
-            console.error("Real-time fetch error:", err);
-            setGatekeeperError("Error monitoring requests. Connection lost or access denied.");
-          });
+        .light .cyber-glass {
+            background: rgba(255, 253, 240, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(234, 179, 8, 0.35);
+            box-shadow: 0 8px 30px rgba(250, 204, 21, 0.15);
         }
-        return () => unsubscribe();
-      }, [appStatus, fbRefs]);
 
-      const handleAdminAction = async (id, newStatus) => {
-        if (!fbRefs) return;
-        setGatekeeperError(null);
-        try {
-          const { updateDoc, doc } = window.FB_MODULES;
-          const userDocRef = doc(fbRefs.db, 'artifacts', fbRefs.appId, 'public', 'data', 'access_requests', id);
-          await updateDoc(userDocRef, { status: newStatus });
-        } catch (e) {
-          console.error("Failed to update status:", e);
-          setGatekeeperError("Action failed. Permission denied.");
+        .cyber-glass-hover {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-      };
+        .cyber-glass-hover:hover {
+            border-color: rgba(255, 230, 0, 0.8);
+            box-shadow: 0 0 25px rgba(250, 204, 21, 0.35), inset 0 0 15px rgba(250, 204, 21, 0.1);
+            transform: translateY(-2px);
+        }
 
-      // Pass-through to original app if approved
-      if (appStatus === 'approved') {
-        return <MainApp />;
-      }
+        /* Futuristic Neon Text Gradient */
+        .neon-text {
+            background: linear-gradient(135deg, #ffe600 0%, #f59e0b 50%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-      // Gatekeeper Screens
-      return (
-        <div className="relative min-h-screen w-full bg-[#050811] text-slate-100 font-rajdhani flex items-center justify-center overflow-hidden">
-          <FuturisticBackground />
-          
-          <div className="relative z-10 w-full max-w-md p-8 border border-[#00ff88]/30 bg-[#0a0f1d]/90 backdrop-blur-xl rounded-2xl shadow-[0_0_50px_rgba(0,255,136,0.15)] flex flex-col items-center text-center">
+        .neon-border {
+            position: relative;
+        }
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(90deg, #ffe600, #f59e0b, #f97316, #ffe600);
+            background-size: 300% 100%;
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+            animation: cyberShimmer 4s linear infinite;
+        }
+        .neon-border:hover::before {
+            opacity: 1;
+        }
+
+        /* HUD Corner Markers */
+        .hud-corner-tl, .hud-corner-tr, .hud-corner-bl, .hud-corner-br {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-color: #facc15;
+            pointer-events: none;
+        }
+        .hud-corner-tl { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+        .hud-corner-tr { top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }
+        .hud-corner-bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
+        .hud-corner-br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+        /* Custom Cyber Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050503;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ffe600, #f59e0b);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ffe600;
+        }
+
+        /* Ambient Cyber Grid Lines */
+        .cyber-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(250, 204, 21, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(250, 204, 21, 0.05) 1px, transparent 1px);
+        }
+        .light .cyber-grid {
+            background-image: 
+                linear-gradient(to right, rgba(234, 179, 8, 0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(234, 179, 8, 0.08) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-[#030712] text-slate-100 font-sans antialiased transition-colors duration-300 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black dark:bg-[#030712] dark:text-slate-100">
+
+    <!-- Interactive Background Node Canvas -->
+    <canvas id="cyberCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+    <div class="fixed inset-0 cyber-grid pointer-events-none z-0"></div>
+
+    <!-- Futuristic Sticky Navigation Bar -->
+    <header id="header" class="sticky top-0 z-40 w-full border-b border-cyan-500/20 cyber-glass transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
             
-            {gatekeeperError && (
-              <div className="absolute -top-12 w-full p-2 bg-red-950/90 border border-red-500/50 text-red-300 text-xs rounded-lg font-semibold animate-pulse z-50 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-                ⚠️ {gatekeeperError}
-              </div>
-            )}
+            <!-- Brand Logo HUD -->
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="relative w-11 h-11 rounded-xl bg-slate-900 border border-cyan-400/50 flex items-center justify-center font-heading font-black text-cyan-400 text-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] group-hover:border-cyan-300 group-hover:scale-105 transition-all">
+                    <span class="hud-corner-tl"></span>
+                    <span class="hud-corner-tr"></span>
+                    <span class="hud-corner-bl"></span>
+                    <span class="hud-corner-br"></span>
+                    <span class="neon-text">GA</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-heading font-bold text-base tracking-wider text-white group-hover:text-cyan-400 transition-colors">Gabino Ang</span>
+                    <span class="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">&lt;ICT_Educator // Tech_Support&gt;</span>
+                </div>
+            </a>
 
-            {/* Hidden Admin Trigger */}
-            <button 
-              onClick={() => setAppStatus(prev => prev === 'admin_login' ? 'locked' : 'admin_login')}
-              className="absolute top-4 right-4 text-slate-600 hover:text-[#00ff88] transition-colors"
-              title="Admin Access"
-            >
-              <LockIcon className="w-5 h-5" />
-            </button>
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center space-x-8 text-xs font-tech font-semibold tracking-wider uppercase">
+                <a href="#hero" class="text-slate-300 hover:text-cyan-400 transition-colors flex items-center space-x-1">
+                    <span class="text-cyan-500 font-mono text-[10px]">01.</span>
+                    <span>Home</span>
+                </a>
+                <a href="#about" class="text-slate-300 hover:text-cyan-400 transition-colors flex items-center space-x-1">
+                    <span class="text-cyan-500 font-mono text-[10px]">02.</span>
+                    <span>About</span>
+                </a>
+                <a href="#projects" class="text-slate-300 hover:text-cyan-400 transition-colors flex items-center space-x-1">
+                    <span class="text-cyan-500 font-mono text-[10px]">03.</span>
+                    <span>Project</span>
+                </a>
+                <a href="#contact" class="text-slate-300 hover:text-cyan-400 transition-colors flex items-center space-x-1">
+                    <span class="text-cyan-500 font-mono text-[10px]">04.</span>
+                    <span>Contact</span>
+                </a>
+            </nav>
 
-            {appStatus === 'initializing' && (
-              <>
-                <LoaderIcon className="w-12 h-12 text-[#00ff88] mb-4 animate-spin" />
-                <h2 className="text-xl font-orbitron font-bold tracking-widest text-white">VERIFYING CLEARANCE</h2>
-              </>
-            )}
-
-            {appStatus === 'locked' && (
-              <>
-                <ShieldIcon className="w-16 h-16 text-red-500 mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
-                <h2 className="text-2xl font-orbitron font-bold tracking-widest text-red-500 mb-2">SYSTEM LOCKED</h2>
-                <p className="text-slate-400 text-sm mb-6">Unauthorized access detected. You must request clearance from the System Administrator to utilize the ILAW Cyber-Engine.</p>
+            <!-- Actions (Theme Toggle + Cyber Resume Button) -->
+            <div class="hidden md:flex items-center space-x-4">
+                <button id="themeToggle" aria-label="Toggle dark/light mode" class="p-2.5 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all focus:outline-none hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                    <i id="themeToggleIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
                 
-                <div className="w-full space-y-4">
-                  <div>
-                    <label className="block text-left text-[11px] font-orbitron uppercase tracking-widest text-[#00ff88] mb-1.5 font-bold">IDENTIFICATION (YOUR NAME)</label>
-                    <input 
-                      type="text" 
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      placeholder="Enter your name..." 
-                      className="w-full bg-[#050811] border border-[#00ff88]/40 focus:border-[#00ff88] text-white rounded-lg p-3 outline-none text-sm font-semibold"
-                    />
-                  </div>
-                  <button 
-                    onClick={handleRequestAccess}
-                    className="w-full bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88] text-[#00ff88] font-orbitron font-bold py-3 rounded-lg transition-all shadow-[0_0_15px_rgba(0,255,136,0.2)]"
-                  >
-                    REQUEST ACCESS CLEARANCE
-                  </button>
-                </div>
-              </>
-            )}
+                <button onclick="openResumeModal()" class="relative group px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(0,240,255,0.7)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span>Resume.pdf</span>
+                </button>
+            </div>
 
-            {appStatus === 'pending' && (
-              <>
-                <div className="relative mb-6">
-                  <div className="w-16 h-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
-                  <LockIcon className="w-6 h-6 text-amber-500 absolute inset-0 m-auto" />
-                </div>
-                <h2 className="text-2xl font-orbitron font-bold tracking-widest text-amber-500 mb-2">CLEARANCE PENDING</h2>
-                <p className="text-slate-300 text-sm mb-4">Your access request has been submitted to the secure network.</p>
-                <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg text-left">
-                  <p className="text-amber-200 text-xs font-semibold">
-                    <span className="text-amber-500">ACTION REQUIRED:</span> Please notify the System Administrator directly (via message or email) that you have requested access. This screen will automatically unlock once you are approved.
-                  </p>
-                </div>
-              </>
-            )}
-
-            {appStatus === 'admin_login' && (
-              <>
-                <CpuIcon className="w-16 h-16 text-[#00f0ff] mb-4 drop-shadow-[0_0_15px_rgba(0,240,255,0.5)]" />
-                <h2 className="text-2xl font-orbitron font-bold tracking-widest text-[#00f0ff] mb-2">ADMIN OVERRIDE</h2>
-                <p className="text-slate-400 text-sm mb-6">Enter master passcode to access the clearance dashboard.</p>
-                
-                <div className="w-full space-y-4">
-                  <input 
-                    type="password" 
-                    value={adminPasscode}
-                    onChange={(e) => setAdminPasscode(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
-                    placeholder="Enter Passcode..." 
-                    className="w-full bg-[#050811] border border-[#00f0ff]/40 focus:border-[#00f0ff] text-white rounded-lg p-3 outline-none text-center tracking-widest font-bold"
-                  />
-                  <button 
-                    onClick={handleAdminLogin}
-                    className="w-full bg-[#00f0ff] text-black font-orbitron font-bold py-3 rounded-lg transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                  >
-                    AUTHENTICATE
-                  </button>
-                  <button 
-                    onClick={() => setAppStatus('locked')}
-                    className="text-slate-500 text-xs font-bold hover:text-white"
-                  >
-                    CANCEL
-                  </button>
-                </div>
-              </>
-            )}
-
-            {appStatus === 'admin_dashboard' && (
-              <div className="w-full flex flex-col h-[60vh]">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-orbitron font-bold tracking-widest text-[#00ff88] flex items-center gap-2">
-                    CLEARANCE LOGS
-                    <span className="flex items-center gap-1 text-[10px] bg-[#00ff88]/10 border border-[#00ff88]/40 px-2 py-0.5 rounded-full text-[#00ff88]">
-                      <span className="w-1.5 h-1.5 bg-[#00ff88] rounded-full animate-ping inline-block"></span>
-                      LIVE
-                    </span>
-                  </h2>
-                  <button onClick={() => setAppStatus('locked')} className="text-red-400 text-xs font-bold border border-red-500/50 px-3 py-1 rounded hover:bg-red-500/10 transition-colors">EXIT ADMIN</button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar text-left">
-                  {requests.length === 0 && <p className="text-slate-500 text-sm text-center italic mt-10">No clearance requests found.</p>}
-                  
-                  {requests.map((req) => (
-                    <div key={req.id} className={`p-3 border rounded-lg ${req.status === 'approved' ? 'border-[#00ff88]/30 bg-[#00ff88]/5' : req.status === 'denied' ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-bold text-white text-sm">{req.name}</p>
-                          <p className="text-[10px] text-slate-500">{new Date(req.timestamp).toLocaleString()}</p>
-                        </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${req.status === 'approved' ? 'bg-[#00ff88] text-black' : req.status === 'denied' ? 'bg-red-500 text-white' : 'bg-amber-500 text-black'}`}>
-                          {req.status}
-                        </span>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        {req.status !== 'approved' && (
-                          <button onClick={() => handleAdminAction(req.id, 'approved')} className="flex-1 bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/50 text-xs py-1 rounded hover:bg-[#00ff88] hover:text-black transition-colors font-bold">
-                            APPROVE
-                          </button>
-                        )}
-                        {req.status === 'approved' && (
-                          <button onClick={() => handleAdminAction(req.id, 'denied')} className="flex-1 bg-slate-800 text-slate-400 border border-slate-700 text-xs py-1 rounded hover:bg-red-500 hover:text-white transition-colors font-bold">
-                            REVOKE
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-          </div>
+            <!-- Mobile Drawer Toggle -->
+            <div class="flex items-center space-x-3 md:hidden">
+                <button id="mobileThemeToggle" aria-label="Toggle theme mobile" class="p-2 rounded-lg border border-cyan-500/30 text-cyan-400">
+                    <i id="mobileThemeToggleIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+                <button id="mobileMenuBtn" aria-label="Open menu" class="p-2 rounded-lg border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                    <i id="menuIcon" class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
         </div>
-      );
-    }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<GatekeeperApp />);
-  </script>
+        <!-- Mobile Drawer Menu -->
+        <div id="mobileMenu" class="hidden md:hidden border-b border-cyan-500/30 bg-[#030712]/95 backdrop-blur-2xl px-6 pt-4 pb-6 space-y-4 font-tech">
+            <a href="#hero" class="mobile-nav-link block py-2 text-sm font-semibold tracking-wider hover:text-cyan-400">01. HOME</a>
+            <a href="#about" class="mobile-nav-link block py-2 text-sm font-semibold tracking-wider hover:text-cyan-400">02. ABOUT</a>
+            <a href="#projects" class="mobile-nav-link block py-2 text-sm font-semibold tracking-wider hover:text-cyan-400">03. PORTFOLIO</a>
+            <a href="#contact" class="mobile-nav-link block py-2 text-sm font-semibold tracking-wider hover:text-cyan-400">04. CONTACT</a>
+            <button onclick="openResumeModal()" class="w-full text-center bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-3 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <i class="fa-solid fa-file-code mr-2"></i>VIEW RESUME
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Section Content -->
+    <main class="flex-grow relative z-10">
+        
+        <!-- Page 1: Homepage (Digital Front Door & Cyber Elevator Pitch) -->
+        <section id="hero" class="relative pt-12 pb-20 md:pt-28 md:pb-32 overflow-hidden">
+            <!-- Background Ambient Neon Glow Orbs -->
+            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow"></div>
+            <div class="absolute top-1/3 right-10 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                    
+                    <!-- Hero Left: Core Elevator Pitch -->
+                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                        
+                        <!-- Futuristic Status Tag -->
+                        <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-400/40 text-cyan-300 text-xs font-mono tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                            <span class="relative flex h-2 w-2">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
+                            </span>
+                            <span>&gt; SYSTEM_ONLINE // OPEN FOR ICT ROLES & WORKSHOPS</span>
+                        </div>
+
+                        <!-- Main Heading -->
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-tight">
+                            Hi, I'm <span class="neon-text">Gabino Ang</span>.<br/>I make tech click.
+                        </h1>
+
+                        <!-- Subtitle: Who / What / For Whom -->
+                        <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-sans">
+                            I am a Senior High School <strong class="text-cyan-400 font-semibold">ICT Teacher & Tech Support Specialist</strong>. I empower students to master <strong class="text-cyan-400 font-semibold">computer hardware servicing, networking, and digital literacy</strong> through hands-on troubleshooting and interactive EdTech labs.
+                        </p>
+
+                        <!-- Cyber CTA Buttons -->
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                            <a href="#projects" class="w-full sm:w-auto relative group px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white font-tech font-bold text-sm tracking-wider uppercase shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(0,240,255,0.7)] hover:scale-[1.02] active:scale-[0.98] transition-all text-center">
+                                <span>Explore Portfolio</span>
+                                <i class="fa-solid fa-arrow-right-long ml-2 text-xs"></i>
+                            </a>
+                            <a href="#contact" class="w-full sm:w-auto px-8 py-4 rounded-xl font-tech font-bold text-sm tracking-wider uppercase border border-cyan-500/40 hover:border-cyan-400 bg-slate-900/60 hover:bg-cyan-500/10 text-cyan-300 transition-all text-center hover:shadow-[0_0_20px_rgba(6,182,212,0.25)]">
+                                Initiate Contact
+                            </a>
+                        </div>
+
+                        <!-- Active Social Handles HUD -->
+                        <div class="pt-6 flex items-center justify-center lg:justify-start space-x-6 text-slate-400 font-mono text-sm">
+                            <a href="https://www.facebook.com/profile.php?id=61572161957681" target="_blank" rel="noopener" aria-label="Facebook" class="hover:text-cyan-400 hover:scale-125 transition-all"><i class="fa-brands fa-facebook-f text-lg"></i></a>
+                            <a href="https://tiktok.com" target="_blank" rel="noopener" aria-label="TikTok" class="hover:text-cyan-400 hover:scale-125 transition-all"><i class="fa-brands fa-tiktok text-lg"></i></a>
+                            <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube" class="hover:text-cyan-400 hover:scale-125 transition-all"><i class="fa-brands fa-youtube text-lg"></i></a>
+                            <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="X/Twitter" class="hover:text-cyan-400 hover:scale-125 transition-all"><i class="fa-brands fa-x-twitter text-lg"></i></a>
+                            <span class="text-slate-700">|</span>
+                            <span class="text-xs text-cyan-400 font-mono"><i class="fa-solid fa-location-crosshairs mr-1"></i> San Francisco, CA</span>
+                        </div>
+                    </div>
+
+                    <!-- Hero Right: Holographic Tech Card -->
+                    <div class="lg:col-span-5 relative">
+                        <div class="relative mx-auto max-w-md lg:max-w-none">
+                            
+                            <!-- Glowing Frame Ambient Aura -->
+                            <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 opacity-40 blur-xl animate-pulse-glow"></div>
+                            
+                            <!-- Holographic Profile Visual Card -->
+                            <div class="relative rounded-2xl cyber-glass p-6 space-y-5 border border-cyan-500/30">
+                                <span class="hud-corner-tl"></span>
+                                <span class="hud-corner-tr"></span>
+                                <span class="hud-corner-bl"></span>
+                                <span class="hud-corner-br"></span>
+
+                                <!-- Top Terminal Header -->
+                                <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3 text-xs font-mono text-cyan-400">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span>IDENTITY_FILE // GA-2026</span>
+                                    </div>
+                                    <span class="text-slate-500">v3.4.0</span>
+                                </div>
+
+                                <!-- Photo and Bio Header -->
+                                <div class="flex items-center space-x-4">
+                                    <!-- Futuristic Avatar Frame -->
+                                    <div class="relative w-20 h-20 rounded-2xl p-0.5 bg-gradient-to-tr from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_20px_rgba(6,182,212,0.4)] flex-shrink-0">
+                                        <img src="2x2.jpg" alt="Gabino Ang" class="w-full h-full object-cover object-top rounded-[14px]">
+                                    </div>
+                                    <div>
+                                        <h2 class="font-heading font-bold text-lg text-white">Gabino Ang</h2>
+                                        <p class="text-xs font-mono text-cyan-400 mt-0.5">ICT Educator & Tech Support</p>
+                                        <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-mono bg-cyan-950/80 text-cyan-300 rounded border border-cyan-500/30">DepEd / Technical Lead</span>
+                                    </div>
+                                </div>
+
+                                <!-- Cyber Metrics -->
+                                <div class="space-y-2.5 text-xs font-mono border-t border-b border-cyan-500/20 py-4 text-slate-300">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">&gt; Core Focus:</span>
+                                        <span class="text-cyan-300 font-semibold">ICT & Hardware Servicing</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">&gt; Experience:</span>
+                                        <span class="text-cyan-300 font-semibold">9+ Years Active</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-500">&gt; Primary Stack:</span>
+                                        <span class="text-cyan-300 font-semibold">EdTech / Networking / Diagnostics</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs font-tech pt-1">
+                                    <span class="text-emerald-400 font-mono"><i class="fa-solid fa-circle-check mr-1"></i> Ready for EdTech Labs</span>
+                                    <a href="#about" class="text-cyan-400 hover:text-cyan-300 font-bold underline decoration-cyan-500">Read Story →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 2: About Page (Story, Core Values, Philosophy & Personal Hobbies) -->
+        <section id="about" class="py-20 md:py-32 relative border-t border-cyan-500/20 bg-slate-950/60 backdrop-blur-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <div class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 font-mono text-xs text-cyan-400 mb-3">
+                        PAGE_02 // BACKGROUND_NARRATIVE
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-heading font-extrabold text-white tracking-tight">
+                        My Story, Values & Personal Side
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    
+                    <!-- Left: Bio Narrative & Core Values -->
+                    <div class="lg:col-span-7 space-y-6 text-slate-300 text-base leading-relaxed">
+                        <h3 class="text-2xl font-tech font-bold text-white leading-snug">
+                            How a Passion for Technology Turned into a Calling for Teaching
+                        </h3>
+                        <p>
+                            My journey began when I assembled my first computer hardware and solved my first complex troubleshooting problem. For the first time, technology stopped being an intimidating black box and became an interactive canvas for creative problem-solving. That single spark ignited my lifelong passion for Information and Communications Technology (ICT) and digital literacy.
+                        </p>
+                        <p>
+                            With a strong foundation in Computer Education and Technical Support, I realized that true digital fluency isn't about memorizing software menus—it's about hands-on creation and practical skill-building. Over the years as an ICT educator, I’ve dedicated my career to demystifying technology, guiding students through hardware, software, and digital media, and empowering them to navigate today's tech-driven world with confidence.
+                        </p>
+
+                        <!-- Core Values Cards Grid -->
+                        <div class="pt-6">
+                            <h4 class="font-tech font-bold text-white text-lg mb-4 flex items-center space-x-2">
+                                <i class="fa-solid fa-microchip text-cyan-400"></i>
+                                <span>Core Teaching Values</span>
+                            </h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="p-4 rounded-xl cyber-glass border border-cyan-500/20 text-center relative">
+                                    <div class="text-2xl mb-2 text-cyan-400">🔍</div>
+                                    <h5 class="font-bold text-sm text-white font-tech mb-1">Inquiry First</h5>
+                                    <p class="text-xs text-slate-400">Questions over rote memorization.</p>
+                                </div>
+                                <div class="p-4 rounded-xl cyber-glass border border-cyan-500/20 text-center relative">
+                                    <div class="text-2xl mb-2 text-cyan-400">🤝</div>
+                                    <h5 class="font-bold text-sm text-white font-tech mb-1">Digital Inclusion</h5>
+                                    <p class="text-xs text-slate-400">Every learner belongs in Tech.</p>
+                                </div>
+                                <div class="p-4 rounded-xl cyber-glass border border-cyan-500/20 text-center relative">
+                                    <div class="text-2xl mb-2 text-cyan-400">🚀</div>
+                                    <h5 class="font-bold text-sm text-white font-tech mb-1">Real-World Purpose</h5>
+                                    <p class="text-xs text-slate-400">Connecting concepts to life.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Cyber Personal Interests Card -->
+                    <div class="lg:col-span-5">
+                        <div class="cyber-glass p-6 sm:p-8 rounded-2xl border border-cyan-500/30 relative space-y-6">
+                            <span class="hud-corner-tl"></span>
+                            <span class="hud-corner-tr"></span>
+                            <span class="hud-corner-bl"></span>
+                            <span class="hud-corner-br"></span>
+
+                            <h3 class="text-xl font-heading font-bold text-white border-b border-cyan-500/20 pb-4 flex items-center justify-between">
+                                <span>PERSONAL_DATA</span>
+                                <i class="fa-solid fa-mug-hot text-cyan-400 text-lg"></i>
+                            </h3>
+
+                            <!-- Coffee Brew -->
+                            <div class="space-y-1">
+                                <span class="text-xs font-mono uppercase text-cyan-400 font-bold tracking-wider">// FAVORITE COFFEE BREW</span>
+                                <p class="text-sm font-tech font-semibold text-white bg-slate-900/60 p-3 rounded-xl border border-cyan-500/20">
+                                    ☕ Pour-over Dark Roast / Espresso Single Origin
+                                </p>
+                            </div>
+
+                            <!-- Hobbies -->
+                            <div class="space-y-1">
+                                <span class="text-xs font-mono uppercase text-purple-400 font-bold tracking-wider">// WEEKEND HOBBIES</span>
+                                <p class="text-sm text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-purple-500/20">
+                                    🎮 PC Gaming & Hardware Assembly / ⚽ Sepak Takraw
+                                </p>
+                            </div>
+
+                            <!-- Desk Reading -->
+                            <div class="space-y-1">
+                                <span class="text-xs font-mono uppercase text-blue-400 font-bold tracking-wider">// DESK READING</span>
+                                <p class="text-sm text-slate-300 italic bg-slate-900/60 p-3 rounded-xl border border-blue-500/20">
+                                    "The Demon-Haunted World: Science as a Candle in the Dark" — Carl Sagan
+                                </p>
+                            </div>
+
+                            <!-- Teaching Philosophy Quote -->
+                            <div class="p-4 rounded-xl bg-gradient-to-r from-cyan-950/60 to-purple-950/60 border border-cyan-500/30 text-xs text-slate-300 space-y-2">
+                                <p class="italic leading-relaxed font-sans">
+                                    "If you can't explain computers simply, you don't understand them well enough yet. My goal is to make digital skills feel accessible and empowering to every student."
+                                </p>
+                                <span class="block text-right text-cyan-400 font-mono font-bold">— Gabino Ang</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 3: Portfolio Page (Curated ICT Case Studies with Problem, Role, Result) -->
+        <section id="projects" class="py-20 md:py-32 relative border-t border-cyan-500/20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <div class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 font-mono text-xs text-cyan-400 mb-3">
+                        PAGE_03 // CASE_STUDIES
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-heading font-extrabold text-white tracking-tight">
+                        Curated ICT Projects
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-3 font-tech">Quality over quantity. Breakdown of Problem, Role, and Measurable Result.</p>
+                </div>
+
+                <!-- Case Studies Container -->
+                <div class="space-y-10">
+                    
+                    <!-- Priority Case Study: AI & Interactive ICT Tools (Gemini Shared Project) -->
+                    <div class="cyber-glass rounded-2xl overflow-hidden border border-cyan-500/30 p-6 sm:p-8 relative cyber-glass-hover shadow-[0_0_25px_rgba(6,182,212,0.15)]">
+                        <span class="hud-corner-tl"></span>
+                        <span class="hud-corner-tr"></span>
+                        <span class="hud-corner-bl"></span>
+                        <span class="hud-corner-br"></span>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            <div class="lg:col-span-5 relative overflow-hidden rounded-xl h-60 bg-slate-900 border border-cyan-500/30">
+                                <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/800x600/030712/00f0ff?text=AI+Teacher+%26+EdTech+Tools'" 
+                                     alt="AI Teacher & Interactive ICT Tools" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md text-xs font-mono text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/40 font-bold">
+                                    ★ FEATURED // AI & INTERACTIVE ICT TOOLS
+                                </span>
+                            </div>
+
+                            <div class="lg:col-span-7 space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <h3 class="text-2xl font-tech font-bold text-white">
+                                        Neural DLL(ILAW FORMAT) GENERATOR
+                                    </h3>
+                                    <a href="https://gemini.google.com/share/d228aca40088?skid=0e9c02de-adf7-475f-b89f-46f36acb5488" target="_blank" rel="noopener" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-tech font-bold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] transition-all shrink-0">
+                                        <span>View Session</span>
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30">
+                                        <span class="block text-xs font-mono text-rose-400 font-bold uppercase mb-1">&gt; The Problem</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Difficulty in providing customized, interactive step-by-step guidance and AI feedback during complex ICT labs.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+                                        <span class="block text-xs font-mono text-cyan-400 font-bold uppercase mb-1">&gt; My Role</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            AI Prompt Engineer & Tech Educator. Designed tailored Gemini prompt workflows and interactive student guides.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+                                        <span class="block text-xs font-mono text-emerald-400 font-bold uppercase mb-1">&gt; Measurable Result</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Accelerated student problem resolution by <strong class="text-emerald-400">70%</strong> and enhanced interactive lab participation.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Study 1 -->
+                    <div class="cyber-glass rounded-2xl overflow-hidden border border-cyan-500/30 p-6 sm:p-8 relative cyber-glass-hover">
+                        <span class="hud-corner-tl"></span>
+                        <span class="hud-corner-tr"></span>
+                        <span class="hud-corner-bl"></span>
+                        <span class="hud-corner-br"></span>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            <div class="lg:col-span-5 relative overflow-hidden rounded-xl h-60 bg-slate-900 border border-cyan-500/30">
+                                <img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&q=80&w=800" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/800x600/030712/00f0ff?text=Hardware+Servicing+Lab'" 
+                                     alt="Hardware Servicing Lab" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md text-xs font-mono text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/40">
+                                    CASE_02 // HARDWARE & SERVICING
+                                </span>
+                            </div>
+
+                            <div class="lg:col-span-7 space-y-4">
+                                <h3 class="text-2xl font-tech font-bold text-white">
+                                    Overhauling Computer Hardware Labs with Interactive Diagnostics
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30">
+                                        <span class="block text-xs font-mono text-rose-400 font-bold uppercase mb-1">&gt; The Problem</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Textbook lectures left Senior High students struggling with practical hardware assembly and network troubleshooting.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+                                        <span class="block text-xs font-mono text-cyan-400 font-bold uppercase mb-1">&gt; My Role</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Lead ICT Educator. Built hands-on stations for PC disassembly, cable crimping, and OS installation diagnostics.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+                                        <span class="block text-xs font-mono text-emerald-400 font-bold uppercase mb-1">&gt; Measurable Result</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Practical skill evaluation pass rate rose to <strong class="text-emerald-400">96%</strong> with 100+ students certified in basic hardware servicing.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Study 2 -->
+                    <div class="cyber-glass rounded-2xl overflow-hidden border border-cyan-500/30 p-6 sm:p-8 relative cyber-glass-hover">
+                        <span class="hud-corner-tl"></span>
+                        <span class="hud-corner-tr"></span>
+                        <span class="hud-corner-bl"></span>
+                        <span class="hud-corner-br"></span>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            <div class="lg:col-span-5 relative overflow-hidden rounded-xl h-60 bg-slate-900 border border-cyan-500/30 lg:order-last">
+                                <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/800x600/030712/00f0ff?text=EdTech+Learning+Hub'" 
+                                     alt="EdTech Learning Hub" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md text-xs font-mono text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/40">
+                                    CASE_03 // EDTECH & DIGITAL LITERACY
+                                </span>
+                            </div>
+
+                            <div class="lg:col-span-7 space-y-4">
+                                <h3 class="text-2xl font-tech font-bold text-white">
+                                    Flipped Classroom Digital Literacy & LMS Hub
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30">
+                                        <span class="block text-xs font-mono text-rose-400 font-bold uppercase mb-1">&gt; The Problem</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Students struggled with software retention and lacked centralized digital access to step-by-step tech tutorials.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+                                        <span class="block text-xs font-mono text-cyan-400 font-bold uppercase mb-1">&gt; My Role</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Instructional Designer & ICT Teacher. Created short video walkthroughs and interactive self-check quizzes.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+                                        <span class="block text-xs font-mono text-emerald-400 font-bold uppercase mb-1">&gt; Measurable Result</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Reduced missed lab submissions by <strong class="text-emerald-400">65%</strong> and boosted weekly portal engagement 4.2x.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Study 3 -->
+                    <div class="cyber-glass rounded-2xl overflow-hidden border border-cyan-500/30 p-6 sm:p-8 relative cyber-glass-hover">
+                        <span class="hud-corner-tl"></span>
+                        <span class="hud-corner-tr"></span>
+                        <span class="hud-corner-bl"></span>
+                        <span class="hud-corner-br"></span>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            <div class="lg:col-span-5 relative overflow-hidden rounded-xl h-60 bg-slate-900 border border-cyan-500/30">
+                                <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800" 
+                                     onerror="this.onerror=null; this.src='https://placehold.co/800x600/030712/00f0ff?text=ICT+Helpdesk+Guild'" 
+                                     alt="Tech Guild Helpdesk" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md text-xs font-mono text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/40">
+                                    CASE_04 // IT HELPDESK & COMMUNITY
+                                </span>
+                            </div>
+
+                            <div class="lg:col-span-7 space-y-4">
+                                <h3 class="text-2xl font-tech font-bold text-white">
+                                    Student-Led ICT Helpdesk & Hardware Refurbishing Guild
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/30">
+                                        <span class="block text-xs font-mono text-rose-400 font-bold uppercase mb-1">&gt; The Problem</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            School computer labs suffered from idle unserviceable PCs, while interested students lacked hands-on repair experience.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+                                        <span class="block text-xs font-mono text-cyan-400 font-bold uppercase mb-1">&gt; My Role</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Founder & Mentor. Trained students in hardware repair, component upgrades, and preventive PC maintenance.
+                                        </p>
+                                    </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+                                        <span class="block text-xs font-mono text-emerald-400 font-bold uppercase mb-1">&gt; Measurable Result</span>
+                                        <p class="text-xs text-slate-300 leading-relaxed">
+                                            Refurbished <strong class="text-emerald-400">30+ computer workstations</strong> for campus use & trained 40+ student peer tech assistants.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Page 4: Contact Page (Frictionless Reach-out, Copyable Email & Socials) -->
+        <section id="contact" class="py-20 md:py-32 border-t border-cyan-500/20 bg-slate-950/80 backdrop-blur-md relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    
+                    <!-- Left: Contact Information & Direct Email -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <div>
+                            <div class="inline-block px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 font-mono text-xs text-cyan-400 mb-3">
+                                PAGE_04 // COMM_LINK
+                            </div>
+                            <h2 class="text-3xl sm:text-5xl font-heading font-extrabold text-white tracking-tight">
+                                Frictionless Reach-Out
+                            </h2>
+                        </div>
+                        <p class="text-slate-300 text-base leading-relaxed">
+                            Whether you're looking to hire a passionate ICT teacher, need computer servicing or EdTech consulting, or want to collaborate on tech education, I'd love to hear from you.
+                        </p>
+
+                        <!-- Direct Copyable Email Box -->
+                        <div class="p-5 rounded-2xl cyber-glass border border-cyan-500/30 relative space-y-2">
+                            <span class="hud-corner-tl"></span>
+                            <span class="hud-corner-tr"></span>
+                            <span class="hud-corner-bl"></span>
+                            <span class="hud-corner-br"></span>
+
+                            <span class="block text-xs text-cyan-400 font-mono">// DIRECT EMAIL (CLICK TO COPY)</span>
+                            <div class="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-cyan-500/30">
+                                <span class="font-mono text-sm text-cyan-300 font-semibold select-all">s3bordz@gmail.com</span>
+                                <button onclick="copyToClipboard('s3bordz@gmail.com')" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-tech font-bold hover:shadow-[0_0_15px_rgba(0,240,255,0.5)] transition-all flex items-center">
+                                    <i class="fa-regular fa-copy mr-1.5"></i> COPY
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active Social Profiles (Facebook, TikTok, YouTube, X/Twitter) -->
+                        <div class="pt-2">
+                            <span class="block text-xs font-mono uppercase text-cyan-400 mb-3">// ACTIVE SOCIAL PROFILES</span>
+                            <div class="flex flex-wrap gap-3 font-tech">
+                                <a href="https://facebook.com" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl border border-cyan-500/30 bg-slate-900/60 hover:border-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold text-slate-200 flex items-center space-x-2 transition-all">
+                                    <i class="fa-brands fa-facebook-f text-blue-400 text-base"></i>
+                                    <span>Facebook</span>
+                                </a>
+                                <a href="https://tiktok.com" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl border border-cyan-500/30 bg-slate-900/60 hover:border-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold text-slate-200 flex items-center space-x-2 transition-all">
+                                    <i class="fa-brands fa-tiktok text-cyan-400 text-base"></i>
+                                    <span>TikTok</span>
+                                </a>
+                                <a href="https://youtube.com" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl border border-cyan-500/30 bg-slate-900/60 hover:border-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold text-slate-200 flex items-center space-x-2 transition-all">
+                                    <i class="fa-brands fa-youtube text-red-500 text-base"></i>
+                                    <span>YouTube</span>
+                                </a>
+                                <a href="https://twitter.com" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl border border-cyan-500/30 bg-slate-900/60 hover:border-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold text-slate-200 flex items-center space-x-2 transition-all">
+                                    <i class="fa-brands fa-x-twitter text-slate-200 text-base"></i>
+                                    <span>X / Twitter</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: FormSubmit Integrated Contact Form -->
+                    <div class="lg:col-span-7">
+                        <div class="cyber-glass p-8 rounded-2xl border border-cyan-500/30 shadow-2xl relative">
+                            <span class="hud-corner-tl"></span>
+                            <span class="hud-corner-tr"></span>
+                            <span class="hud-corner-bl"></span>
+                            <span class="hud-corner-br"></span>
+
+                            <h3 class="text-xl font-heading font-bold text-white mb-6 flex items-center justify-between">
+                                <span>SEND DIRECT MESSAGE</span>
+                                <span class="text-xs font-mono text-cyan-400">&gt;_ FormSubmit</span>
+                            </h3>
+                            
+                            <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-5 font-sans">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label for="name" class="block text-xs font-mono text-cyan-300 mb-2">SENDER_NAME *</label>
+                                        <input type="text" id="name" name="name" required placeholder="Kenny Lao" 
+                                               class="w-full px-4 py-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="email" class="block text-xs font-mono text-cyan-300 mb-2">SENDER_EMAIL *</label>
+                                        <input type="email" id="email" name="email" required placeholder="kennylao@deped.gov.ph" 
+                                               class="w-full px-4 py-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="message" class="block text-xs font-mono text-cyan-300 mb-2">MESSAGE_PAYLOAD *</label>
+                                    <textarea id="message" name="message" rows="4" required placeholder="Hello Gabino, I'd like to discuss an ICT workshop..." 
+                                              class="w-full px-4 py-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-sm resize-none"></textarea>
+                                </div>
+
+                                <button type="submit" id="submitBtn" class="w-full relative group px-6 py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white font-tech font-bold text-sm tracking-wider uppercase shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(0,240,255,0.7)] transition-all flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>TRANSMIT MESSAGE</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Futuristic Cyber Footer -->
+    <footer class="border-t border-cyan-500/20 bg-[#030712] py-8 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-500">
+            <div class="flex items-center space-x-2">
+                <span>© <span id="year"></span> GABINO ANG // ALL_RIGHTS_RESERVED</span>
+            </div>
+
+            <div class="flex items-center space-x-6 text-sm text-cyan-400">
+                <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="hover:text-white transition-colors"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="https://tiktok.com" target="_blank" aria-label="TikTok" class="hover:text-white transition-colors"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://youtube.com" target="_blank" aria-label="YouTube" class="hover:text-white transition-colors"><i class="fa-brands fa-youtube"></i></a>
+                <a href="https://twitter.com" target="_blank" aria-label="X/Twitter" class="hover:text-white transition-colors"><i class="fa-brands fa-x-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Resume Preview Cyber Modal -->
+    <div id="resumeModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl">
+        <div class="cyber-glass max-w-2xl w-full rounded-2xl border border-cyan-500/40 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative">
+            <span class="hud-corner-tl"></span>
+            <span class="hud-corner-tr"></span>
+            <span class="hud-corner-bl"></span>
+            <span class="hud-corner-br"></span>
+
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-cyan-500/20 flex items-center justify-between bg-slate-900/90">
+                <div class="flex items-center space-x-2 font-mono text-xs text-cyan-400">
+                    <i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i>
+                    <span>GABINO_ANG_ICT_RESUME.PDF</span>
+                </div>
+                <button onclick="closeResumeModal()" class="text-slate-400 hover:text-white text-xl font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Modal Body Content -->
+            <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300 font-sans">
+                <div class="border-b border-cyan-500/20 pb-4">
+                    <h2 class="text-2xl font-heading font-bold text-white">Gabino Ang</h2>
+                    <p class="text-xs text-cyan-400 font-mono mt-1">Senior High School ICT Educator | Hardware & EdTech Specialist</p>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold text-cyan-300 mb-2 text-xs uppercase tracking-wider">// TEACHING SUMMARY</h4>
+                    <p class="text-xs leading-relaxed">
+                        Passionate Senior High School Educator with 9+ years of combined experience in Information & Communications Technology (ICT) instruction and Computer Technical Support. Dedicated to hands-on learning, computer hardware servicing, and digital inclusion.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold text-cyan-300 mb-2 text-xs uppercase tracking-wider">// EXPERIENCE</h4>
+                    <ul class="space-y-3 text-xs font-sans">
+                        <li>
+                            <strong class="text-white font-semibold">Senior High School ICT Educator — Otto Lingue National High School</strong> (2017–Present)
+                            <p class="text-slate-400 mt-0.5">Teaches ICT, Computer Hardware Servicing, and leads campus EdTech integration.</p>
+                        </li>
+                        <li>
+                            <strong class="text-white font-semibold">Technical Support Specialist — Microtrade GCM Corporation</strong> (2016–2017)
+                            <p class="text-slate-400 mt-0.5">Computer hardware servicing, network troubleshooting, and diagnostics.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="px-6 py-4 border-t border-cyan-500/20 flex justify-end space-x-3 bg-slate-900/90">
+                <button onclick="closeResumeModal()" class="px-4 py-2 text-xs font-mono rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800">CLOSE</button>
+                <button onclick="downloadResume()" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-5 py-2 text-xs font-tech font-bold rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                    <i class="fa-solid fa-download mr-1.5"></i> DOWNLOAD PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none cyber-glass border border-cyan-500/40 p-4 rounded-xl shadow-2xl flex items-center space-x-3">
+        <div id="toastIcon" class="w-8 h-8 rounded-full bg-cyan-500 text-black font-bold flex items-center justify-center text-sm">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h5 id="toastTitle" class="text-xs font-heading font-bold text-white">SYSTEM NOTIFICATION</h5>
+            <p id="toastMessage" class="text-xs font-mono text-cyan-300">Operation completed successfully.</p>
+        </div>
+    </div>
+
+    <!-- Scripts & Canvas Animation -->
+    <script>
+        // Set Dynamic Year
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Cyber Particle Network Canvas Animation
+        const canvas = document.getElementById('cyberCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            const numParticles = Math.min(Math.floor(width / 15), 80);
+            
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.6,
+                    vy: (Math.random() - 0.5) * 0.6,
+                    radius: Math.random() * 1.8 + 1
+                });
+            }
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.65)';
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.15)';
+
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 130) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        animateCanvas();
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleIcon = document.getElementById('themeToggleIcon');
+        const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+        const mobileThemeToggleIcon = document.getElementById('mobileThemeToggleIcon');
+
+        function updateThemeIcons(isDark) {
+            const iconClass = isDark ? 'fa-sun' : 'fa-moon';
+            themeToggleIcon.className = `fa-solid ${iconClass} text-lg`;
+            if (mobileThemeToggleIcon) {
+                mobileThemeToggleIcon.className = `fa-solid ${iconClass} text-lg`;
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.body.classList.toggle('light', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcons(isDark);
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+        if (mobileThemeToggle) {
+            mobileThemeToggle.addEventListener('click', toggleTheme);
+        }
+
+        // Initialize Theme Mode
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.add('light');
+            updateThemeIcons(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            document.body.classList.remove('light');
+            updateThemeIcons(true);
+        }
+
+        // Mobile Menu Drawer Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            const isHidden = mobileMenu.classList.toggle('hidden');
+            menuIcon.className = isHidden ? 'fa-solid fa-bars text-xl' : 'fa-solid fa-xmark text-xl';
+        });
+
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                menuIcon.className = 'fa-solid fa-bars text-xl';
+            });
+        });
+
+        // Resume Modal Logic
+        function openResumeModal() {
+            const modal = document.getElementById('resumeModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResumeModal() {
+            const modal = document.getElementById('resumeModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function downloadResume() {
+            showToast('DOWNLOAD INITIATED', 'Resume PDF document is downloading...');
+            closeResumeModal();
+        }
+
+        // Toast Notification System
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3500);
+        }
+
+        // Clipboard Helper
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('COPIED TO CLIPBOARD', `${text} copied.`);
+        }
+
+        // FormSubmit Contact Form Handler
+        function handleContactSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> <span>TRANSMITTING...</span>';
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            fetch("https://formsubmit.co/ajax/s3bordz@gmail.com", {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    message: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast('TRANSMISSION SUCCESSFUL', 'Your message has been delivered to s3bordz@gmail.com!');
+                document.getElementById('contactForm').reset();
+            })
+            .catch(error => {
+                showToast('TRANSMISSION ERROR', 'Unable to send. Please email s3bordz@gmail.com directly.');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>TRANSMIT MESSAGE</span>';
+            });
+        }
+    </script>
 </body>
 </html>
