@@ -325,6 +325,33 @@
         #hoopCanvas:active {
             cursor: grabbing;
         }
+
+        /* =========================================================
+           CLIENT-SIDE CONTENT & SAVE / PRINT PROTECTION
+           ========================================================= */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        input, textarea, [contenteditable="true"], .select-all {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        img, svg {
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        @media print {
+            html, body {
+                display: none !important;
+                visibility: hidden !important;
+            }
+        }
     </style>
 </head>
 <body class="gate-locked font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-slate-900">
@@ -1412,7 +1439,7 @@
                                     <h3 class="text-2xl font-tech font-bold neo-title">
                                        MPS CALCULATOR
                                     </h3>
-                                    <a href="https://share.gemini.google/QAqWacDAJlgC" target="_blank" rel="noopener" class="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl neo-btn-accent font-tech font-bold text-xs uppercase tracking-wider shrink-0">
+                                    <a href="https://share.gemini.google/Q1iJwKD4bMFQ" target="_blank" rel="noopener" class="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl neo-btn-accent font-tech font-bold text-xs uppercase tracking-wider shrink-0">
                                         <span>View Session</span>
                                         <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                     </a>
@@ -3204,6 +3231,113 @@
             window.addEventListener('load', startGate);
             // Initialize immediately if DOM is ready
             startGate();
+        })();
+
+        // -------------------------------------------------------------
+        // 10. CLIENT-SIDE SECURITY GUARD (NO RIGHT-CLICK / SAVE / INSPECT)
+        // -------------------------------------------------------------
+        (function initSecurityGuard() {
+            let lastAlertTime = 0;
+
+            function notifyBlocked(reason) {
+                const now = Date.now();
+                if (now - lastAlertTime < 2000) return;
+                lastAlertTime = now;
+                if (typeof window.showToast === 'function') {
+                    window.showToast('SECURITY PROTECTED', reason);
+                }
+            }
+
+            function isEditableElement(el) {
+                if (!el) return false;
+                const tag = el.tagName;
+                return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable || Boolean(el.closest && el.closest('.select-all'));
+            }
+
+            // 1. Disable Right-Click Context Menu everywhere
+            document.addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                notifyBlocked('Right-click is disabled on this page.');
+                return false;
+            }, true);
+
+            // 2. Block View Source, Inspect Element / DevTools, Save Page, and Print shortcuts
+            document.addEventListener('keydown', function (e) {
+                const key = (e.key || '').toLowerCase();
+                const code = e.keyCode || e.which;
+                const ctrlOrMeta = e.ctrlKey || e.metaKey;
+                const inEditable = isEditableElement(e.target);
+
+                // F12 (DevTools)
+                if (key === 'f12' || code === 123) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyBlocked('Code inspection is restricted.');
+                    return false;
+                }
+
+                // Ctrl+Shift+I / J / C / K / E (Windows/Linux DevTools)
+                // Cmd+Option+I / J / C / U (macOS DevTools & View Source)
+                if (
+                    (ctrlOrMeta && e.shiftKey && ['i', 'j', 'c', 'k', 'e'].includes(key)) ||
+                    (e.metaKey && e.altKey && ['i', 'j', 'c', 'u'].includes(key))
+                ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyBlocked('Developer inspection shortcuts are disabled.');
+                    return false;
+                }
+
+                // Ctrl+U / Cmd+U (View Page Source)
+                if (ctrlOrMeta && key === 'u') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyBlocked('Viewing page source is disabled.');
+                    return false;
+                }
+
+                // Ctrl+S / Cmd+S (Save Webpage)
+                if (ctrlOrMeta && key === 's') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyBlocked('Saving this page is disabled.');
+                    return false;
+                }
+
+                // Ctrl+P / Cmd+P (Print / Save as PDF)
+                if (ctrlOrMeta && key === 'p') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyBlocked('Printing and PDF export are disabled.');
+                    return false;
+                }
+
+                // Block bulk Select-All outside form inputs & copyable email
+                if (ctrlOrMeta && key === 'a' && !inEditable) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }, true);
+
+            // 3. Prevent dragging images/SVGs off the page to save them
+            document.addEventListener('dragstart', function (e) {
+                if (e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'SVG' || (e.target.closest && e.target.closest('svg')))) {
+                    e.preventDefault();
+                }
+            }, true);
+
+            // 4. Guard against casual bulk copy while keeping inputs & Copy Email button 100% functional
+            document.addEventListener('copy', function (e) {
+                if (!e.isTrusted) return;
+                const active = document.activeElement;
+                if (isEditableElement(active) || isEditableElement(e.target)) return;
+                const sel = window.getSelection ? window.getSelection().toString().trim() : '';
+                if (sel === 's3bordz@gmail.com') return;
+                e.preventDefault();
+                notifyBlocked('Copying page content is restricted.');
+            }, true);
         })();
     </script>
 </body>
